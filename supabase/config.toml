@@ -1,0 +1,8 @@
+# Configuração mínima para a integração GitHub ↔ Supabase aplicar as migrações de supabase/migrations.
+project_id = "mac-erp"
+
+[db]
+major_version = 17
+
+[auth]
+site_url = "http://localhost:3000"

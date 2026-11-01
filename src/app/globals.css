@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+/* Tokens da marca Marcos Andrade Concreto: verde-limão #ADFF00 sobre preto */
+@theme {
+  --color-marca: #adff00;
+  --color-marca-preto: #0b0d0a;
+  --color-fundo: var(--fundo);
+  --color-superficie: var(--superficie);
+  --color-afundado: var(--afundado);
+  --color-tinta: var(--tinta);
+  --color-suave: var(--suave);
+  --color-linha: var(--linha);
+  --color-destaque: var(--destaque);
+  --color-destaque-fundo: var(--destaque-fundo);
+  --color-ok: var(--ok);
+  --color-ok-fundo: var(--ok-fundo);
+  --color-alerta: var(--alerta);
+  --color-alerta-fundo: var(--alerta-fundo);
+  --color-erro: var(--erro);
+  --color-erro-fundo: var(--erro-fundo);
+
+  --font-display: var(--font-archivo), "Arial Narrow", Arial, sans-serif;
+  --font-sans: var(--font-public-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+:root {
+  --fundo: #edefea;
+  --superficie: #ffffff;
+  --afundado: #f4f6f0;
+  --tinta: #171b14;
+  --suave: #5a6253;
+  --linha: #d5d9cf;
+  --destaque: #3f6b00;
+  --destaque-fundo: #eefbd0;
+  --ok: #2f7a4b;
+  --ok-fundo: #dcefe2;
+  --alerta: #a86a00;
+  --alerta-fundo: #f7ebcf;
+  --erro: #b4271f;
+  --erro-fundo: #f7dcd9;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fundo: #0f120d;
+    --superficie: #181c15;
+    --afundado: #1f241b;
+    --tinta: #e9eee3;
+    --suave: #9ba494;
+    --linha: #30372a;
+    --destaque: #adff00;
+    --destaque-fundo: #25330c;
+    --ok: #5fbf84;
+    --ok-fundo: #1d3427;
+    --alerta: #e2a93a;
+    --alerta-fundo: #3a2f17;
+    --erro: #f07468;
+    --erro-fundo: #3d1f1c;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --fundo: #0f120d;
+  --superficie: #181c15;
+  --afundado: #1f241b;
+  --tinta: #e9eee3;
+  --suave: #9ba494;
+  --linha: #30372a;
+  --destaque: #adff00;
+  --destaque-fundo: #25330c;
+  --ok: #5fbf84;
+  --ok-fundo: #1d3427;
+  --alerta: #e2a93a;
+  --alerta-fundo: #3a2f17;
+  --erro: #f07468;
+  --erro-fundo: #3d1f1c;
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: var(--fundo);
+  color: var(--tinta);
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  text-wrap: balance;
+}
+
+:focus-visible {
+  outline: 3px solid var(--destaque);
+  outline-offset: 2px;
+}
+
+input,
+select,
+textarea {
+  font-size: 16px; /* evita zoom automático no iPhone */
+}
