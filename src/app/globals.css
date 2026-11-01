@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
-/* Tokens da marca Marcos Andrade Concreto: verde-limão #ADFF00 sobre preto */
+/* Tokens da marca Marcos Andrade Concreto (logo em public/marca).
+   Regra de contraste: o verde #B4FF20 só aparece sobre preto ou como fundo de botão com texto preto.
+   Texto de destaque sobre fundo claro usa --destaque (#3F6B00), que passa no contraste AA. */
 @theme {
-  --color-marca: #adff00;
+  --color-marca: #b4ff20;
   --color-marca-preto: #0b0d0a;
   --color-fundo: var(--fundo);
   --color-superficie: var(--superficie);
@@ -49,7 +51,7 @@
     --tinta: #e9eee3;
     --suave: #9ba494;
     --linha: #30372a;
-    --destaque: #adff00;
+    --destaque: #b4ff20;
     --destaque-fundo: #25330c;
     --ok: #5fbf84;
     --ok-fundo: #1d3427;
@@ -68,7 +70,7 @@
   --tinta: #e9eee3;
   --suave: #9ba494;
   --linha: #30372a;
-  --destaque: #adff00;
+  --destaque: #b4ff20;
   --destaque-fundo: #25330c;
   --ok: #5fbf84;
   --ok-fundo: #1d3427;

@@ -20,7 +20,7 @@ export const carregarSessao = cache(async (): Promise<Sessao | null> => {
   if (!user) return null;
 
   const [pessoaRes, acessosRes, usinasRes] = await Promise.all([
-    supabase.from("pessoa").select("id, nome, email, telefone, ativo").eq("id", user.id).maybeSingle(),
+    supabase.from("pessoa").select("id, nome, email, telefone, cargo, matricula, ativo").eq("id", user.id).maybeSingle(),
     supabase.from("pessoa_acesso").select("id, usina_id, papel, setores").eq("pessoa_id", user.id),
     supabase.from("usina").select("id, codigo, nome, cidade, uf, ativa").order("codigo"),
   ]);
@@ -30,6 +30,8 @@ export const carregarSessao = cache(async (): Promise<Sessao | null> => {
     nome: user.email?.split("@")[0] ?? "",
     email: user.email ?? null,
     telefone: null,
+    cargo: null,
+    matricula: null,
     ativo: true,
   };
   const acessos = (acessosRes.data ?? []) as Acesso[];

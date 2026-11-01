@@ -89,11 +89,14 @@ export function Etiqueta({ children, tom = "neutro" }: { children: ReactNode; to
   return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${cores[tom]}`}>{children}</span>;
 }
 
-export function Logo({ compacto = false }: { compacto?: boolean }) {
-  return (
-    <span className="font-display grid uppercase leading-[.9] text-marca" aria-label="Marcos Andrade Concreto">
-      <b className={compacto ? "text-base font-extrabold" : "text-xl font-extrabold"}>MarcosAndrade</b>
-      <span className={`${compacto ? "text-[9px]" : "text-[11px]"} font-bold tracking-[.42em] text-[#f2f5ee]`}>Concreto</span>
-    </span>
-  );
+/** Logo oficial (vetorizada). Sempre sobre fundo preto: o verde não tem contraste em fundo claro. */
+export function Logo({ variante = "horizontal", className = "" }: { variante?: "horizontal" | "vertical" | "simbolo"; className?: string }) {
+  const arquivos = {
+    horizontal: { src: "/marca/logo-horizontal.svg", w: 760, h: 170 },
+    vertical: { src: "/marca/logo-vertical.svg", w: 444, h: 296 },
+    simbolo: { src: "/marca/simbolo.svg", w: 282, h: 170 },
+  };
+  const a = arquivos[variante];
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={a.src} width={a.w} height={a.h} alt="Marcos Andrade Concreto" className={`block h-auto ${className}`} />;
 }

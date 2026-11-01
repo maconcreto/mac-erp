@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { LogOut, UserRound } from "lucide-react";
 import { Logo } from "@/components/ui";
 import { sair } from "@/app/entrar/acoes";
 import { carregarSessao, primeiroNome } from "@/lib/sessao";
@@ -29,7 +29,8 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
       <header className="sticky top-0 z-20 border-b-[3px] border-marca bg-marca-preto pt-[env(safe-area-inset-top)] text-[#f2f5ee]">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
           <Link href="/" aria-label="Início" className="flex min-h-12 items-center">
-            <Logo compacto />
+            <Logo variante="simbolo" className="w-11 sm:hidden" />
+            <Logo variante="horizontal" className="hidden w-[168px] sm:block" />
           </Link>
           {usinaUnica ? (
             <span className="border-l border-white/25 pl-3 text-xs font-semibold uppercase tracking-wider opacity-70">
@@ -53,7 +54,14 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
                 Cadastros
               </Link>
             ) : null}
-            <span className="hidden px-2 text-marca md:inline">{primeiroNome(sessao.pessoa.nome)}</span>
+            <Link
+              href="/conta"
+              aria-label="Minha conta"
+              className="flex min-h-12 min-w-12 items-center justify-center gap-2 rounded-lg px-2 text-marca hover:opacity-90"
+            >
+              <UserRound className="size-5" />
+              <span className="hidden md:inline">{primeiroNome(sessao.pessoa.nome)}</span>
+            </Link>
             <form action={sair}>
               <button
                 type="submit"

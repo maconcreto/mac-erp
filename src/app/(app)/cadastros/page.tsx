@@ -7,7 +7,7 @@ export const metadata = { title: "Cadastros" };
 
 const ITENS = [
   { href: "/cadastros/usinas", titulo: "Usinas", texto: "Centrais de concreto e seus códigos", Icone: Factory },
-  { href: "/cadastros/pessoas", titulo: "Pessoas e acessos", texto: "Quem entra e o que cada um vê", Icone: Users },
+  { href: "/cadastros/pessoas", titulo: "Equipe", texto: "Criar usuários, senhas e acessos", Icone: Users },
 ];
 
 export default async function Cadastros() {

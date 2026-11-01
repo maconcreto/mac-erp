@@ -1,13 +1,12 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { X } from "lucide-react";
-import { BotaoLink, Etiqueta, Painel } from "@/components/ui";
+import { ChevronRight, UserPlus } from "lucide-react";
+import { BotaoLink, Etiqueta } from "@/components/ui";
 import { carregarSessao } from "@/lib/sessao";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { NOME_PAPEL, NOME_SETOR, type Acesso, type Pessoa } from "@/lib/tipos";
-import { removerAcesso } from "../acoes";
-import { FormAcesso } from "./form";
+import { NOME_PAPEL, type Acesso, type Pessoa } from "@/lib/tipos";
 
-export const metadata = { title: "Pessoas e acessos" };
+export const metadata = { title: "Equipe" };
 
 export default async function Pessoas() {
   const s = await carregarSessao();
@@ -15,75 +14,58 @@ export default async function Pessoas() {
 
   const supabase = await criarClienteServidor();
   const [pessoasRes, acessosRes] = await Promise.all([
-    supabase.from("pessoa").select("id, nome, email, telefone, ativo").order("nome"),
+    supabase.from("pessoa").select("id, nome, email, telefone, cargo, matricula, ativo").order("nome"),
     supabase.from("pessoa_acesso").select("id, pessoa_id, usina_id, papel, setores"),
   ]);
   const pessoas = (pessoasRes.data ?? []) as Pessoa[];
   const acessos = (acessosRes.data ?? []) as (Acesso & { pessoa_id: string })[];
   const codigo = new Map(s.usinas.map((u) => [u.id, u.codigo]));
-  const semAcesso = pessoas.filter((p) => !acessos.some((a) => a.pessoa_id === p.id));
 
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-extrabold">Pessoas e acessos</h1>
-        <BotaoLink href="/cadastros" variante="secundario">Cadastros</BotaoLink>
+        <h1 className="text-3xl font-extrabold">Equipe</h1>
+        <div className="flex gap-2">
+          <BotaoLink href="/cadastros" variante="secundario">Cadastros</BotaoLink>
+          <BotaoLink href="/cadastros/pessoas/nova">
+            <UserPlus className="size-5" /> Novo usuário
+          </BotaoLink>
+        </div>
       </div>
 
-      {semAcesso.length > 0 ? (
-        <Painel titulo={`Aguardando liberação (${semAcesso.length})`} className="border-alerta/40">
-          <ul className="flex flex-col gap-1">
-            {semAcesso.map((p) => (
-              <li key={p.id} className="text-base">
-                <b>{p.nome}</b> <span className="text-suave">· {p.email}</span>
-              </li>
-            ))}
-          </ul>
-        </Painel>
-      ) : null}
-
-      <Painel titulo="Liberar acesso">
-        <FormAcesso
-          pessoas={pessoas.map((p) => ({ id: p.id, nome: p.nome || p.email || p.id }))}
-          usinas={s.usinas.filter((u) => u.ativa).map((u) => ({ id: u.id, codigo: u.codigo, nome: u.nome }))}
-          pessoaInicial={semAcesso[0]?.id}
-        />
-      </Painel>
-
-      <Painel titulo="Equipe">
-        <ul className="flex flex-col divide-y divide-linha">
-          {pessoas.map((p) => (
-            <li key={p.id} className="flex flex-col gap-2 py-3">
-              <span className="flex flex-wrap items-baseline gap-x-2">
-                <b className="text-base">{p.nome}</b>
-                <span className="text-sm text-suave">{p.email}</span>
-              </span>
-              <div className="flex flex-wrap gap-2">
-                {acessos
-                  .filter((a) => a.pessoa_id === p.id)
-                  .map((a) => (
-                    <span key={a.id} className="inline-flex items-center gap-1 rounded-xl border border-linha bg-afundado py-1 pl-3 pr-1 text-sm">
-                      <b>{a.usina_id ? codigo.get(a.usina_id) ?? "?" : "Todas"}</b>
-                      <span>· {NOME_PAPEL[a.papel]}</span>
-                      {a.papel !== "diretoria" && a.setores.length ? (
-                        <span className="text-suave">· {a.setores.map((x) => NOME_SETOR[x]).join(", ")}</span>
-                      ) : null}
-                      {p.id !== s.pessoa.id ? (
-                        <form action={removerAcesso}>
-                          <input type="hidden" name="id" value={a.id} />
-                          <button type="submit" aria-label="Remover acesso" className="flex size-9 items-center justify-center rounded-lg text-suave hover:text-erro">
-                            <X className="size-4" />
-                          </button>
-                        </form>
-                      ) : null}
-                    </span>
-                  ))}
-                {!acessos.some((a) => a.pessoa_id === p.id) ? <Etiqueta>Sem acesso</Etiqueta> : null}
-              </div>
+      <ul className="flex flex-col gap-2">
+        {pessoas.map((p) => {
+          const meus = acessos.filter((a) => a.pessoa_id === p.id);
+          return (
+            <li key={p.id}>
+              <Link
+                href={`/cadastros/pessoas/${p.id}`}
+                className={`flex min-h-16 items-center gap-4 rounded-2xl border border-linha bg-superficie p-4 hover:border-suave ${p.ativo ? "" : "opacity-60"}`}
+              >
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-marca-preto font-display text-lg font-bold text-marca">
+                  {p.nome.trim().charAt(0).toUpperCase() || "?"}
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="flex flex-wrap items-baseline gap-x-2">
+                    <b className="text-base">{p.nome}</b>
+                    {p.cargo ? <span className="text-sm text-suave">{p.cargo}</span> : null}
+                  </span>
+                  <span className="flex flex-wrap gap-1.5">
+                    {!p.ativo ? <Etiqueta>Desativado</Etiqueta> : null}
+                    {meus.length === 0 && p.ativo ? <Etiqueta>Sem acesso</Etiqueta> : null}
+                    {meus.map((a) => (
+                      <Etiqueta key={a.id} tom={a.papel === "diretoria" ? "marca" : "neutro"}>
+                        {(a.usina_id ? codigo.get(a.usina_id) ?? "?" : "Todas") + " · " + NOME_PAPEL[a.papel]}
+                      </Etiqueta>
+                    ))}
+                  </span>
+                </span>
+                <ChevronRight className="size-5 shrink-0 text-suave" />
+              </Link>
             </li>
-          ))}
-        </ul>
-      </Painel>
+          );
+        })}
+      </ul>
     </div>
   );
 }

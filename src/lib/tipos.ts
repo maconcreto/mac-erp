@@ -46,5 +46,7 @@ export type Pessoa = {
   nome: string;
   email: string | null;
   telefone: string | null;
+  cargo: string | null;
+  matricula: string | null;
   ativo: boolean;
 };
