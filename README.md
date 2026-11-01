@@ -47,6 +47,19 @@ O escopo, o roadmap e as regras de alteração estão no documento **Plataforma 
 3. Em **Supabase → Authentication → Emails → Templates**, cole cada modelo de `supabase/templates/` com o assunto de `supabase/templates/ASSUNTOS.md`.
 4. Para mudar o visual, edite `supabase/templates/gerar.mjs` e rode `node supabase/templates/gerar.mjs`.
 
+## Importar o histórico da Frota (do artefato antigo)
+
+1. Publique a migração `20261101000300_frota.sql` (ela cria boletim, ordens de serviço, consumo mensal e leituras).
+2. Descompacte o export do artefato (pasta `plataforma-mac_AAAA-MM-DD_HHMM`) na raiz do projeto e gere os SQLs:
+
+```bash
+node supabase/importacao/frota.mjs ./plataforma-mac_2026-11-01_1859 ./importar-frota
+```
+
+3. No **Supabase → SQL Editor**, rode os 4 arquivos de `importar-frota/`, nesta ordem: `1-ativos-e-parametros.sql`, `2-boletins.sql`, `3-ordens-de-servico.sql`, `4-consumo-mensal.sql`. Pode rodar de novo sem duplicar nada.
+
+A central `maconc` do artefato é ligada à usina `VDC`. Esses arquivos têm dados reais da operação e estão no `.gitignore`.
+
 ## Identidade visual
 
 A logo oficial está vetorizada em `public/marca/` (horizontal, vertical e símbolo). O verde `#B4FF20` só aparece sobre preto ou como fundo de botão com texto preto; texto de destaque sobre fundo claro usa `#3F6B00`.

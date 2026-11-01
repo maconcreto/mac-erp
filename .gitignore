@@ -9,3 +9,7 @@ next-env.d.ts
 .DS_Store
 supabase/.temp
 supabase/.branches
+
+# dados reais exportados do artefato antigo e SQLs de importação gerados: nunca vão para o Git
+plataforma-mac_*/
+importar-frota/
