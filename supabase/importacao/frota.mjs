@@ -120,7 +120,8 @@ function itensDe(obj, ctx) {
       aviso(`Boletim ${ctx}: ativo "${id}" não existe no cadastro; linha ignorada.`);
       continue;
     }
-    const r = { codigo, parado: it.parado === true };
+    const r = { codigo };
+    if (it.parado === true) r.parado = true;
     for (const k of ITENS_NUM) r[k] = num(it[k]);
     r.posto = txt(it.posto);
     r.cupom = txt(it.cupom);
@@ -269,7 +270,7 @@ function aspas(json) {
   while (json.includes(`$${tag}$`)) tag += "x";
   return `$${tag}$${json}$${tag}$`;
 }
-const J = (v) => aspas(JSON.stringify(v));
+const J = (v) => aspas(JSON.stringify(v, (_k, val) => (val === null ? undefined : val)));
 const cabecalho = (titulo) =>
   `-- Importação da Frota — ${titulo}\n-- Gerado de ${resolve(entrada)}\n-- Pode ser rodado mais de uma vez: nada é duplicado.\n`;
 const exigeUsinas = () =>
@@ -324,10 +325,28 @@ on conflict (ativo_id) do update set data = excluded.data, horas = excluded.hora
 }commit;
 `;
 
-// 2 — boletins
-const listaBol = [...boletins.values()].map(({ itens, ...b }) => b);
-const listaItens = [...boletins.values()].flatMap((b) => b.itens.map((i) => ({ usina: b.usina, data: b.data, ...i })));
-arquivos["2-boletins.sql"] = `${cabecalho("2 de 4: boletins diários")}
+// partes pequenas: cada arquivo tem no máximo ~MAX bytes de dados
+const MAX = 22000;
+function partes(lista) {
+  const out = [];
+  let atual = [], bytes = 0;
+  for (const x of lista) {
+    const t = JSON.stringify(x).length;
+    if (atual.length && bytes + t > MAX) { out.push(atual); atual = []; bytes = 0; }
+    atual.push(x);
+    bytes += t;
+  }
+  if (atual.length) out.push(atual);
+  return out.length ? out : [[]];
+}
+const nome = (n, rotulo, i, total) => `${n}-${rotulo}${total > 1 ? "-" + String(i + 1).padStart(2, "0") : ""}.sql`;
+
+// 2 — boletins (cada boletim leva suas linhas junto)
+const partesBol = partes([...boletins.values()]);
+partesBol.forEach((parte, i) => {
+  const listaBol = parte.map(({ itens, ...b }) => b);
+  const listaItens = parte.flatMap((b) => b.itens.map((it) => ({ usina: b.usina, data: b.data, ...it })));
+  arquivos[nome(2, "boletins", i, partesBol.length)] = `${cabecalho(`2: boletins diários (parte ${i + 1} de ${partesBol.length})`)}
 -- Rode depois do arquivo 1 (precisa dos ativos).
 begin;
 ${exigeUsinas()}
@@ -338,7 +357,7 @@ join public.usina u on u.codigo = x.usina
 on conflict (usina_id, data) do nothing;
 
 insert into public.boletim_item (boletim_id, usina_id, ativo_id, parado, h0, h1, km0, km1, hb0, hb1, litros, preco, valor, posto, cupom, motorista, viagens, vb, m3, m3b, justificativa, sem_prod, sit, obs)
-select b.id, u.id, a.id, x.parado, x.h0, x.h1, x.km0, x.km1, x.hb0, x.hb1, x.litros, x.preco, x.valor, x.posto, x.cupom, x.motorista, x.viagens, x.vb, x.m3, x.m3b, x.justificativa, x.sem_prod, x.sit, x.obs
+select b.id, u.id, a.id, coalesce(x.parado, false), x.h0, x.h1, x.km0, x.km1, x.hb0, x.hb1, x.litros, x.preco, x.valor, x.posto, x.cupom, x.motorista, x.viagens, x.vb, x.m3, x.m3b, x.justificativa, x.sem_prod, x.sit, x.obs
 from jsonb_to_recordset(${J(listaItens)}::jsonb) as x(usina text, data date, codigo text, parado boolean, h0 numeric, h1 numeric, km0 numeric, km1 numeric, hb0 numeric, hb1 numeric, litros numeric, preco numeric, valor numeric, posto text, cupom text, motorista text, viagens numeric, vb numeric, m3 numeric, m3b numeric, justificativa text, sem_prod text, sit text, obs text)
 join public.usina u on u.codigo = x.usina
 join public.boletim b on b.usina_id = u.id and b.data = x.data
@@ -346,22 +365,25 @@ join public.ativo a on a.usina_id = u.id and a.codigo = x.codigo
 on conflict (boletim_id, ativo_id) do nothing;
 commit;
 `;
+});
 
 // 3 — ordens de serviço
-const listaOS = [...ordens.values()];
 const contLista = [...contadores.values()];
-arquivos["3-ordens-de-servico.sql"] = `${cabecalho("3 de 4: ordens de serviço")}
+const partesOS = partes([...ordens.values()]);
+partesOS.forEach((parte, i) => {
+  const ultima = i === partesOS.length - 1;
+  arquivos[nome(3, "ordens-de-servico", i, partesOS.length)] = `${cabecalho(`3: ordens de serviço (parte ${i + 1} de ${partesOS.length})`)}
 -- Rode depois do arquivo 1 (precisa dos ativos).
 begin;
 ${exigeUsinas()}
 insert into public.ordem_servico (usina_id, ano, seq, numero, numero_antigo, ativo_id, ativo_texto, classe, status, abertura, inicio, termino, recebimento, checklist, h_inicio, h_termino, horas, km, m3, oficina, nome_oficina, descricao, servicos, pecas, colaborador, encarregado, valor, nf, pagamento, meses, lote_obs, obs, compras, origem, criado_por_nome, atualizado_por_nome, criado_em, atualizado_em)
-select u.id, x.ano, x.seq, x.numero, x.numero_antigo, a.id, x.ativo_texto, x.classe, x.status, x.abertura, x.inicio, x.termino, x.recebimento, x.checklist, x.h_inicio, x.h_termino, x.horas, x.km, x.m3, x.oficina, x.nome_oficina, x.descricao, x.servicos, x.pecas, x.colaborador, x.encarregado, x.valor, x.nf, x.pagamento, x.meses, x.lote_obs, x.obs, coalesce(x.compras, '[]'::jsonb), x.origem, x.criado_por_nome, x.atualizado_por_nome, coalesce(x.criado_em, now()), coalesce(x.atualizado_em, x.criado_em, now())
-from jsonb_to_recordset(${J(listaOS)}::jsonb) as x(usina text, ano int, seq int, numero text, numero_antigo text, ativo text, ativo_texto text, classe text, status text, abertura date, inicio date, termino date, recebimento date, checklist date, h_inicio time, h_termino time, horas numeric, km numeric, m3 numeric, oficina text, nome_oficina text, descricao text, servicos text, pecas text, colaborador text, encarregado text, valor numeric, nf text, pagamento text, meses numeric, lote_obs text, obs text, compras jsonb, origem text, criado_por_nome text, atualizado_por_nome text, criado_em timestamptz, atualizado_em timestamptz)
+select u.id, x.ano, x.seq, x.numero, x.numero_antigo, a.id, x.ativo_texto, x.classe, coalesce(x.status, 'Aberta'), x.abertura, x.inicio, x.termino, x.recebimento, x.checklist, x.h_inicio, x.h_termino, x.horas, x.km, x.m3, x.oficina, x.nome_oficina, x.descricao, x.servicos, x.pecas, x.colaborador, x.encarregado, x.valor, x.nf, x.pagamento, x.meses, x.lote_obs, x.obs, coalesce(x.compras, '[]'::jsonb), x.origem, x.criado_por_nome, x.atualizado_por_nome, coalesce(x.criado_em, now()), coalesce(x.atualizado_em, x.criado_em, now())
+from jsonb_to_recordset(${J(parte)}::jsonb) as x(usina text, ano int, seq int, numero text, numero_antigo text, ativo text, ativo_texto text, classe text, status text, abertura date, inicio date, termino date, recebimento date, checklist date, h_inicio time, h_termino time, horas numeric, km numeric, m3 numeric, oficina text, nome_oficina text, descricao text, servicos text, pecas text, colaborador text, encarregado text, valor numeric, nf text, pagamento text, meses numeric, lote_obs text, obs text, compras jsonb, origem text, criado_por_nome text, atualizado_por_nome text, criado_em timestamptz, atualizado_em timestamptz)
 join public.usina u on u.codigo = x.usina
 left join public.ativo a on a.usina_id = u.id and a.codigo = x.ativo
 on conflict (usina_id, numero) do nothing;
 ${
-  contLista.length
+  ultima && contLista.length
     ? `
 -- o próximo número de OS continua de onde o artefato parou
 insert into public.os_contador (usina_id, ano, ultimo)
@@ -373,20 +395,24 @@ on conflict (usina_id, ano) do update set ultimo = greatest(public.os_contador.u
     : ""
 }commit;
 `;
+});
 
 // 4 — consumo mensal
-arquivos["4-consumo-mensal.sql"] = `${cabecalho("4 de 4: consumo e produção por mês")}
+const partesCons = partes([...consumo.values()]);
+partesCons.forEach((parte, i) => {
+  arquivos[nome(4, "consumo-mensal", i, partesCons.length)] = `${cabecalho(`4: consumo e produção por mês (parte ${i + 1} de ${partesCons.length})`)}
 -- Rode depois do arquivo 1 (precisa dos ativos).
 begin;
 ${exigeUsinas()}
 insert into public.consumo_mensal (usina_id, mes, ativo_id, dias, horas, km, litros, viagens, volume_m3, motorista, capacidade_m3, faturamento, fonte, sobrescrito, origem)
-select u.id, x.mes, a.id, x.dias, x.horas, x.km, x.litros, x.viagens, x.volume_m3, x.motorista, x.capacidade_m3, x.faturamento, x.fonte, x.sobrescrito, 'importado'
-from jsonb_to_recordset(${J([...consumo.values()])}::jsonb) as x(usina text, mes date, ativo text, dias int, horas numeric, km numeric, litros numeric, viagens numeric, volume_m3 numeric, motorista text, capacidade_m3 numeric, faturamento numeric, fonte text, sobrescrito boolean)
+select u.id, x.mes, a.id, x.dias, x.horas, x.km, x.litros, x.viagens, x.volume_m3, x.motorista, x.capacidade_m3, x.faturamento, x.fonte, coalesce(x.sobrescrito, false), 'importado'
+from jsonb_to_recordset(${J(parte)}::jsonb) as x(usina text, mes date, ativo text, dias int, horas numeric, km numeric, litros numeric, viagens numeric, volume_m3 numeric, motorista text, capacidade_m3 numeric, faturamento numeric, fonte text, sobrescrito boolean)
 join public.usina u on u.codigo = x.usina
 join public.ativo a on a.usina_id = u.id and a.codigo = x.ativo
 on conflict (usina_id, mes, ativo_id) do nothing;
 commit;
 `;
+});
 
 mkdirSync(saida, { recursive: true });
 for (const [nome, sql] of Object.entries(arquivos)) writeFileSync(join(saida, nome), sql);
@@ -394,7 +420,7 @@ for (const [nome, sql] of Object.entries(arquivos)) writeFileSync(join(saida, no
 // ---------- resumo ----------
 console.log(`Arquivos gerados em ${resolve(saida)}:`);
 for (const nome of Object.keys(arquivos)) console.log("  " + nome);
-console.log(`\nVai importar: ${ativos.length} ativos, ${listaBol.length} boletins (${listaItens.length} linhas), ${listaOS.length} ordens de serviço, ${consumo.size} registros de consumo mensal, ${leit.length} leituras.`);
+console.log(`\nVai importar: ${ativos.length} ativos, ${boletins.size} boletins (${[...boletins.values()].reduce((n, b) => n + b.itens.length, 0)} linhas), ${ordens.size} ordens de serviço, ${consumo.size} registros de consumo mensal, ${leit.length} leituras.`);
 if (notaLimites) console.log("\n" + notaLimites);
 if (avisos.length) {
   console.log(`\n${avisos.length} aviso(s):`);

@@ -22,7 +22,7 @@ alter table public.ativo
 
 -- ---------- atualizado_em automático ----------
 create or replace function public.tocar_atualizado_em()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql set search_path = public as $$
 begin
   new.atualizado_em := now();
   return new;
