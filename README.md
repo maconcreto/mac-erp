@@ -32,6 +32,25 @@ O escopo, o roadmap e as regras de alteração estão no documento **Plataforma 
 4. **Primeiro acesso.** Abra o site, toque em **Primeiro acesso? Criar conta** e confirme pelo e-mail. A primeira conta vira Diretoria.
 5. **Equipe.** Cada pessoa cria a própria conta. Ela aparece em **Cadastros → Pessoas e acessos → Aguardando liberação**, e a diretoria escolhe usina, papel e setores.
 
+## Usuários
+
+- Só a diretoria cria usuários: **Cadastros → Equipe → Novo usuário** (dados, e-mail de login, senha e acessos).
+- A diretoria pode editar dados, trocar a senha e desativar o usuário (o login é bloqueado na hora).
+- Cada pessoa troca a própria senha em **Minha conta** (ícone de pessoa no topo) ou em **Esqueci minha senha**.
+- Requer a variável `SUPABASE_SERVICE_ROLE_KEY` na Vercel (tipo *Sensitive*). Ela fica só no servidor.
+
+## E-mails (remetente maconcretodev@gmail.com)
+
+1. Na conta Google `maconcretodev@gmail.com`, ative a verificação em duas etapas e crie uma **senha de app**.
+2. Em **Supabase → Authentication → Emails → SMTP Settings**, ative o SMTP próprio:
+   host `smtp.gmail.com`, porta `465`, usuário e remetente `maconcretodev@gmail.com`, nome `Plataforma MAC`, senha = a senha de app.
+3. Em **Supabase → Authentication → Emails → Templates**, cole cada modelo de `supabase/templates/` com o assunto de `supabase/templates/ASSUNTOS.md`.
+4. Para mudar o visual, edite `supabase/templates/gerar.mjs` e rode `node supabase/templates/gerar.mjs`.
+
+## Identidade visual
+
+A logo oficial está vetorizada em `public/marca/` (horizontal, vertical e símbolo). O verde `#B4FF20` só aparece sobre preto ou como fundo de botão com texto preto; texto de destaque sobre fundo claro usa `#3F6B00`.
+
 ## Desenvolvimento local
 
 ```bash
