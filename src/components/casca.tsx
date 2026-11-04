@@ -14,7 +14,7 @@ type Props = { menu: Menu; pessoa: Pessoa; seletor: ReactNode; children: ReactNo
 
 /**
  * Estrutura de todas as telas logadas.
- * Topo: logo e usina de trabalho à esquerda, ☰ à direita.
+ * Topo: usina de trabalho à esquerda, logo no centro, ☰ à direita.
  * O menu (com o perfil) abre pela direita, por cima da tela, no celular e no computador.
  */
 export function Casca({ menu, pessoa, seletor, children }: Props) {
@@ -46,23 +46,26 @@ export function Casca({ menu, pessoa, seletor, children }: Props) {
         </div>
       ) : null}
 
-      {/* ---------- topo: logo e usina à esquerda, menu à direita ---------- */}
+      {/* ---------- topo: usina à esquerda, logo no centro, menu à direita ---------- */}
       <header className="sticky top-0 z-20 border-b-[3px] border-marca bg-marca-preto pt-[env(safe-area-inset-top)] text-[#f2f5ee]">
-        <div className="mx-auto flex max-w-6xl items-center gap-2 py-2.5 pl-[max(16px,env(safe-area-inset-left))] pr-[max(8px,env(safe-area-inset-right))] sm:gap-4">
-          <Link href="/" aria-label="Início" className="flex min-h-12 shrink-0 items-center">
-            <Logo variante="simbolo" className="w-9 sm:hidden" />
-            <Logo variante="horizontal" className="hidden w-40 sm:block" />
+        {/* 3 colunas: as laterais têm a mesma largura, então a logo fica sempre no meio exato */}
+        <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 py-2.5 pl-[max(12px,env(safe-area-inset-left))] pr-[max(12px,env(safe-area-inset-right))] sm:gap-4">
+          <div className="flex min-w-0 justify-start">{seletor}</div>
+          <Link href="/" aria-label="Início" className="flex min-h-12 items-center justify-center">
+            <Logo variante="simbolo" className="w-10 sm:hidden" />
+            <Logo variante="horizontal" className="hidden w-44 sm:block" />
           </Link>
-          {seletor}
-          <button
-            type="button"
-            onClick={() => setAberto(true)}
-            aria-label="Abrir menu"
-            aria-expanded={aberto}
-            className="ml-auto flex size-12 shrink-0 items-center justify-center rounded-xl hover:bg-white/10"
-          >
-            <IconeMenu className="size-7" />
-          </button>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => setAberto(true)}
+              aria-label="Abrir menu"
+              aria-expanded={aberto}
+              className="flex size-12 shrink-0 items-center justify-center rounded-xl hover:bg-white/10"
+            >
+              <IconeMenu className="size-7" />
+            </button>
+          </div>
         </div>
       </header>
 

@@ -47,7 +47,7 @@ export function SeletorUsina({ atual, usinas }: { atual: U | null; usinas: U[] }
   const Icone = todas ? Layers : Factory;
   const etiqueta = (
     <>
-      <Icone className="size-5 shrink-0 text-marca" aria-hidden />
+      <Icone className="hidden size-5 shrink-0 text-marca sm:block" aria-hidden />
       <span className="flex min-w-0 flex-col items-start leading-tight">
         <span className="font-display text-lg font-extrabold tracking-wide text-marca">{trocando ? "…" : todas ? "Todas" : atual.codigo}</span>
         <span className="hidden max-w-48 truncate text-[11px] font-semibold uppercase tracking-wider text-[#c9d0c2] md:block">
@@ -59,7 +59,7 @@ export function SeletorUsina({ atual, usinas }: { atual: U | null; usinas: U[] }
 
   if (usinas.length < 2 && atual) {
     return (
-      <span className="flex min-h-12 items-center gap-2 rounded-xl border border-white/15 px-3" title={atual.nome}>
+      <span className="flex min-h-12 min-w-0 max-w-full items-center gap-2 rounded-xl border border-white/15 px-2.5 sm:px-3" title={atual.nome}>
         {etiqueta}
       </span>
     );
@@ -93,7 +93,7 @@ export function SeletorUsina({ atual, usinas }: { atual: U | null; usinas: U[] }
         aria-haspopup="listbox"
         aria-expanded={aberto}
         aria-label={`Usina: ${todas ? "todas" : atual.nome}. Trocar usina`}
-        className="flex min-h-12 items-center gap-2 rounded-xl border border-marca/50 bg-white/5 px-3 hover:border-marca"
+        className="flex min-h-12 min-w-0 max-w-full items-center gap-1.5 rounded-xl border border-marca/50 bg-white/5 px-2.5 hover:border-marca sm:gap-2 sm:px-3"
       >
         {etiqueta}
         <ChevronDown className={`size-4 shrink-0 text-marca transition ${aberto ? "rotate-180" : ""}`} aria-hidden />
