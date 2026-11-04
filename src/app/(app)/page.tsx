@@ -42,7 +42,7 @@ export default async function Inicio() {
       {boletins.length || usinasOS.length ? (
         <section className="flex flex-col gap-3">
           <h2 className="text-sm font-bold uppercase tracking-wider text-suave">Para hoje</h2>
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {boletins.length ? <CartaoBoletim boletins={boletins} /> : null}
             {usinasOS.length ? (
               <Link href="/tarefa/os" className="group flex flex-col gap-3 rounded-2xl border border-linha bg-superficie p-4 hover:border-suave">
@@ -61,13 +61,15 @@ export default async function Inicio() {
                 {os.lista.length ? (
                   <ul className="flex flex-col divide-y divide-linha rounded-xl border border-linha">
                     {os.lista.map((o) => (
-                      <li key={o.id} className="flex items-center gap-3 px-3 py-2.5">
-                        <span className="w-20 shrink-0 font-display font-bold tabular-nums">{o.numero}</span>
-                        <span className="min-w-0 flex-1 truncate">
-                          {escolha?.todas ? `${codigo.get(o.usina_id)} · ` : ""}
-                          <b>{o.ativo}</b> · {o.descricao}
+                      <li key={o.id} className="flex flex-col gap-0.5 px-3 py-2.5">
+                        <span className="flex items-center justify-between gap-2">
+                          <span className="font-display font-bold tabular-nums">
+                            {escolha?.todas ? `${codigo.get(o.usina_id)} · ` : ""}
+                            {o.numero} · {o.ativo}
+                          </span>
+                          <Etiqueta tom={COR_SITUACAO[o.status]}>{o.status}</Etiqueta>
                         </span>
-                        <Etiqueta tom={COR_SITUACAO[o.status]}>{o.status}</Etiqueta>
+                        <span className="line-clamp-1 text-sm text-suave">{o.descricao}</span>
                       </li>
                     ))}
                   </ul>
@@ -98,7 +100,7 @@ export default async function Inicio() {
             {usinasOS.length ? (
               <Link
                 href="/tarefa/os/nova"
-                className="flex min-h-32 flex-col justify-between gap-4 rounded-2xl border border-marca-preto bg-marca p-4 text-marca-preto transition hover:brightness-105 active:scale-[.98]"
+                className="col-span-2 flex min-h-20 flex-row items-center gap-4 rounded-2xl border border-marca-preto bg-marca p-4 text-marca-preto transition hover:brightness-105 active:scale-[.98] sm:col-span-1 sm:min-h-32 sm:flex-col sm:items-start sm:justify-between"
               >
                 <span className="flex size-12 items-center justify-center rounded-xl bg-marca-preto text-marca">
                   <Plus className="size-6" />

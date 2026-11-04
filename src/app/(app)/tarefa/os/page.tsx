@@ -108,10 +108,12 @@ export default async function ListaOS({ searchParams }: { searchParams: Promise<
               key={f.k}
               href={link({ filtro: f.k })}
               aria-current={f.k === filtro ? "page" : undefined}
-              className={`flex min-h-12 items-center justify-center rounded-xl px-2 text-center text-base font-semibold ${f.k === filtro ? "bg-marca-preto text-marca" : "text-suave hover:text-tinta"}`}
+              className={`flex min-h-12 items-center justify-center whitespace-nowrap rounded-xl px-1 text-center text-[15px] font-semibold ${f.k === filtro ? "bg-marca-preto text-marca" : "text-suave hover:text-tinta"}`}
             >
               {f.l}
-              {f.k === "abertas" ? ` (${nAbertas})` : ""}
+              {f.k === "abertas" && nAbertas ? (
+                <span className={`ml-1.5 rounded-full px-1.5 text-xs tabular-nums ${f.k === filtro ? "bg-marca text-marca-preto" : "bg-afundado"}`}>{nAbertas}</span>
+              ) : null}
             </Link>
           ))}
         </nav>

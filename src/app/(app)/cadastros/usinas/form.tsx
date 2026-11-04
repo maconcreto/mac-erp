@@ -10,7 +10,7 @@ export function FormUsina() {
     <form action={acao} className="flex flex-col gap-4">
       {estado.erro ? <Aviso tipo="erro">{estado.erro}</Aviso> : null}
       {estado.ok ? <Aviso tipo="ok">{estado.ok}</Aviso> : null}
-      <div className="grid gap-4 sm:grid-cols-[120px_1fr]">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[120px_1fr]">
         <Campo rotulo="Código">
           <Entrada name="codigo" placeholder="IOS" maxLength={6} autoCapitalize="characters" required />
         </Campo>
@@ -18,7 +18,7 @@ export function FormUsina() {
           <Entrada name="nome" placeholder="Central Ilhéus" required />
         </Campo>
       </div>
-      <div className="grid gap-4 sm:grid-cols-[1fr_120px]">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_120px]">
         <Campo rotulo="Cidade">
           <Entrada name="cidade" placeholder="Ilhéus" />
         </Campo>

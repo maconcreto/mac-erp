@@ -219,7 +219,7 @@ export function AssistenteOS({ usina, ativos, ativoInicial }: Props) {
         <section className="flex flex-col gap-4">
           <h1 className="text-3xl font-extrabold">O que aconteceu?</h1>
           <p className="-mt-2 text-lg text-suave">{nomes.join(", ")}</p>
-          <div className="grid gap-2 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             {CLASSES.map(({ k, titulo, texto, Icone }) => (
               <button
                 key={k}
@@ -297,7 +297,7 @@ export function AssistenteOS({ usina, ativos, ativoInicial }: Props) {
 
       {/* barra fixa de ação */}
       <div className="fixed inset-x-0 bottom-0 z-10 border-t border-linha bg-superficie/95 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
-        <div className="mx-auto max-w-2xl px-[max(16px,env(safe-area-inset-left))]">
+        <div className="mx-auto max-w-2xl pl-[max(16px,env(safe-area-inset-left))] pr-[max(16px,env(safe-area-inset-right))]">
           {passo < 3 ? (
             passo === 0 && !varios && !outro ? (
               <p className="flex min-h-14 items-center justify-center text-base text-suave">Toque no veículo para continuar</p>

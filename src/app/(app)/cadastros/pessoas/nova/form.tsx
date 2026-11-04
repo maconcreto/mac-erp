@@ -13,7 +13,7 @@ export function FormNovaPessoa({ usinas }: { usinas: UsinaOpcao[] }) {
       {estado.erro ? <Aviso tipo="erro">{estado.erro}</Aviso> : null}
 
       <Bloco numero={1} titulo="Dados da pessoa">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Campo rotulo="Nome completo">
             <Entrada name="nome" autoComplete="off" required />
           </Campo>
@@ -30,7 +30,7 @@ export function FormNovaPessoa({ usinas }: { usinas: UsinaOpcao[] }) {
       </Bloco>
 
       <Bloco numero={2} titulo="Login">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Campo rotulo="E-mail de login" dica="É com ele que a pessoa entra e recebe os e-mails do sistema.">
             <Entrada name="email" type="email" inputMode="email" autoComplete="off" required />
           </Campo>

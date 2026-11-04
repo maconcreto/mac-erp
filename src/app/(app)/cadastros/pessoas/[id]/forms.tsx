@@ -21,7 +21,7 @@ export function FormDados({ pessoa }: { pessoa: Pessoa }) {
     <form action={acao} className="flex flex-col gap-4">
       <Mensagens estado={estado} />
       <input type="hidden" name="id" value={pessoa.id} />
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Campo rotulo="Nome completo">
           <Entrada name="nome" defaultValue={pessoa.nome} required />
         </Campo>

@@ -239,7 +239,7 @@ export function FormBoletim(p: Props) {
       ) : null}
 
       {/* veículos */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {cartoes.map(({ v, f, d, l, bomba, abast, A, ev, ativoHoje, over, leit, preenchido }) => {
           const sit = f.parado ? "parado" : f.sit;
           const produz = PRODUZ.has(v.tipo);
@@ -270,14 +270,14 @@ export function FormBoletim(p: Props) {
                 {etiqueta}
               </div>
 
-              <div role="group" aria-label="Situação no dia" className="flex flex-wrap gap-2">
+              <div role="group" aria-label="Situação no dia" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {([["", "Trabalhou"], ["servico", "Serviço sem produção"], ["manut", "Em manutenção"], ["parado", "Parado"]] as const).map(([k, rot]) => (
                   <button
                     key={k}
                     type="button"
                     aria-pressed={sit === k}
                     onClick={() => setSit(v.id, k)}
-                    className={`min-h-12 rounded-xl border px-3 text-base font-semibold ${sit === k ? "border-marca-preto bg-marca text-marca-preto" : "border-linha bg-fundo text-tinta"}`}
+                    className={`min-h-12 rounded-xl border px-2 text-[15px] font-semibold leading-tight ${sit === k ? "border-marca-preto bg-marca text-marca-preto" : "border-linha bg-fundo text-tinta"}`}
                   >
                     {rot}
                   </button>

@@ -100,7 +100,7 @@ export function SeletorUsina({ atual, usinas }: { atual: U | null; usinas: U[] }
       </button>
 
       {aberto ? (
-        <div className="absolute left-0 top-full z-30 mt-2 w-[min(320px,calc(100vw-32px))] overflow-hidden rounded-2xl border border-linha bg-superficie text-tinta shadow-xl">
+        <div className="fixed inset-x-4 top-[calc(env(safe-area-inset-top)+76px)] z-30 overflow-hidden rounded-2xl border border-linha bg-superficie text-tinta shadow-xl sm:absolute sm:inset-x-auto sm:left-0 sm:top-full sm:mt-2 sm:w-80">
           <p className="border-b border-linha px-4 py-3 text-xs font-bold uppercase tracking-wider text-suave">Trabalhar na usina</p>
           <ul role="listbox" aria-label="Usinas" className="divide-y divide-linha">
             {opcao(TODAS, todas, "Todas as usinas", "Consolidado, para consulta e resultados", <Layers className="size-6" aria-hidden />)}

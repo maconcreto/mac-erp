@@ -78,11 +78,35 @@ export default async function PainelGestao({ searchParams }: { searchParams: Pro
         {r.m3 > 0 ? <GraficoProducao dias={r.dias} /> : <p className="text-base text-suave">Nenhuma produção lançada neste mês.</p>}
       </Painel>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         {/* ---------- consumo por veículo ---------- */}
         <Painel titulo="Diesel por veículo">
           {r.veiculos.length ? (
-            <div className="-mx-5 overflow-x-auto px-5">
+            <>
+            {/* celular: um cartão por veículo, com o L/m³ em destaque */}
+            <ul className="flex flex-col divide-y divide-linha sm:hidden">
+              {r.veiculos.map((v) => (
+                <li key={v.codigo} className="flex items-center gap-3 py-3 first:pt-0">
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <b className="truncate">{v.codigo}</b>
+                    <span className="text-sm text-suave tabular-nums">
+                      {n(v.litros)} L · {v.m3 ? `${n(v.m3, 1)} m³` : "sem m³"} · {brl(v.diesel)}
+                    </span>
+                  </span>
+                  <span className="flex shrink-0 flex-col items-end">
+                    <b className="font-display text-xl tabular-nums">{v.lm3 == null ? "—" : n(v.lm3, 2)}</b>
+                    <span className="text-xs text-suave">L/m³</span>
+                  </span>
+                </li>
+              ))}
+              <li className="flex items-center justify-between py-3 font-semibold tabular-nums">
+                <span>Total</span>
+                <span>
+                  {n(r.litros)} L · {brl(r.diesel)}
+                </span>
+              </li>
+            </ul>
+            <div className="-mx-5 hidden overflow-x-auto px-5 sm:block">
               <table className="w-full min-w-[520px] text-left text-base">
                 <thead>
                   <tr className="border-b border-linha text-xs uppercase tracking-wider text-suave">
@@ -118,6 +142,7 @@ export default async function PainelGestao({ searchParams }: { searchParams: Pro
                 </tfoot>
               </table>
             </div>
+            </>
           ) : (
             <p className="text-base text-suave">Nenhum abastecimento lançado neste mês.</p>
           )}

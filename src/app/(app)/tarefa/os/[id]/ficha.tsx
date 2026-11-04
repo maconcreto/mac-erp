@@ -8,7 +8,7 @@ import { AreaTexto, Aviso, Botao, Campo, Entrada, Etiqueta, Selecao } from "@/co
 import { enviarAnexo } from "@/lib/anexos";
 import { brl, dataBr, lerNumero } from "@/lib/frota/consumo";
 import {
-  CLASSES, COR_SITUACAO, SITUACOES, TIPOS_SERVICO, pendenciasOS, totalOS,
+  CLASSES, COR_SITUACAO, TIPOS_SERVICO, pendenciasOS, totalOS,
   type Arquivo, type AtivoOS, type Compra, type LeituraOS, type OS, type Situacao,
 } from "@/lib/frota/os";
 import { salvarOS } from "../acoes";
@@ -183,7 +183,7 @@ export function FichaOS({ os, usina, ativos, leitura, urls, gestor, travada }: P
         <section className="flex flex-col gap-3 rounded-2xl border border-linha bg-superficie p-4">
           <h2 className="text-lg font-bold">Situação</h2>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-            {SITUACOES.map((st) => (
+            {(["Aberta", "Em execução", "Aguardando peça", "Cancelada", "Concluída"] as const).map((st) => (
               <button
                 key={st}
                 type="button"
@@ -211,7 +211,7 @@ export function FichaOS({ os, usina, ativos, leitura, urls, gestor, travada }: P
 
         {/* ---------- problema ---------- */}
         <Secao titulo="Problema" resumo={[NOME_CLASSE[f.classe] ?? f.classe, f.descricao].filter(Boolean).join(" · ")} aberta={!f.descricao}>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Campo rotulo="Veículo ou equipamento">
               <Selecao value={f.ativo_id} onChange={(e) => mudar("ativo_id", e.target.value)}>
                 <option value="">Escolha…</option>
@@ -245,7 +245,7 @@ export function FichaOS({ os, usina, ativos, leitura, urls, gestor, travada }: P
                 type="button"
                 onClick={() => mudar("classe", c)}
                 aria-pressed={f.classe === c}
-                className={`min-h-12 rounded-xl border px-2 font-semibold ${f.classe === c ? "border-marca-preto bg-marca text-marca-preto" : "border-linha bg-fundo"}`}
+                className={`min-h-12 rounded-xl border px-1 text-[15px] font-semibold ${f.classe === c ? "border-marca-preto bg-marca text-marca-preto" : "border-linha bg-fundo"}`}
               >
                 {NOME_CLASSE[c]}
               </button>
@@ -254,7 +254,7 @@ export function FichaOS({ os, usina, ativos, leitura, urls, gestor, travada }: P
           <Campo rotulo="Descrição do problema">
             <AreaTexto value={f.descricao} onChange={(e) => mudar("descricao", e.target.value)} />
           </Campo>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Campo rotulo="Quem relatou (motorista ou operador)">
               <Entrada value={f.colaborador} onChange={(e) => mudar("colaborador", e.target.value)} />
             </Campo>
@@ -284,7 +284,7 @@ export function FichaOS({ os, usina, ativos, leitura, urls, gestor, travada }: P
               </button>
             ))}
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Campo rotulo="Nome da oficina">
               <Entrada value={f.nome_oficina} onChange={(e) => mudar("nome_oficina", e.target.value)} />
             </Campo>
@@ -338,7 +338,7 @@ export function FichaOS({ os, usina, ativos, leitura, urls, gestor, travada }: P
           resumo={[f.valor && brl(lerNumero(f.valor)), f.nf && `NF ${f.nf}`].filter(Boolean).join(" · ")}
           aberta={f.oficina === "Terceiro" && f.status === "Concluída"}
         >
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Campo rotulo={f.oficina === "Terceiro" ? "Valor do serviço (R$)" : "Mão de obra (R$), se houver"}>
               <Entrada inputMode="decimal" value={f.valor} onChange={(e) => mudar("valor", e.target.value)} className="tabular-nums" />
             </Campo>
@@ -383,7 +383,7 @@ export function FichaOS({ os, usina, ativos, leitura, urls, gestor, travada }: P
                   </button>
                 ) : null}
               </div>
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <Campo rotulo="Fornecedor">
                   <Entrada value={c.fornecedor} onChange={(e) => setCompras(compras.map((x, j) => (j === i ? { ...x, fornecedor: e.target.value } : x)))} />
                 </Campo>
@@ -448,7 +448,7 @@ export function FichaOS({ os, usina, ativos, leitura, urls, gestor, travada }: P
       {/* ---------- barra fixa ---------- */}
       {!travada ? (
         <div className="fixed inset-x-0 bottom-0 z-10 border-t border-linha bg-superficie/95 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
-          <div className="mx-auto flex max-w-3xl items-center gap-3 px-[max(16px,env(safe-area-inset-left))]">
+          <div className="mx-auto flex max-w-3xl items-center gap-3 pl-[max(16px,env(safe-area-inset-left))] pr-[max(16px,env(safe-area-inset-right))]">
             <span className="flex flex-col leading-tight">
               <span className="text-xs font-semibold uppercase tracking-wider text-suave">Total</span>
               <b className="font-display text-xl tabular-nums">{brl(total)}</b>

@@ -95,7 +95,7 @@ export function Etiqueta({ children, tom = "neutro" }: { children: ReactNode; to
     erro: "bg-erro-fundo text-erro",
     info: "bg-info-fundo text-info",
   };
-  return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${cores[tom]}`}>{children}</span>;
+  return <span className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${cores[tom]}`}>{children}</span>;
 }
 
 /** Logo oficial (vetorizada). Sempre sobre fundo preto: o verde não tem contraste em fundo claro. */
