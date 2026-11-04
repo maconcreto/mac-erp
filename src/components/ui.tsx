@@ -80,11 +80,20 @@ export function Aviso({ tipo = "alerta", children }: { tipo?: "ok" | "alerta" | 
   return <div role="status" className={`rounded-xl border px-4 py-3 text-base font-medium ${cores[tipo]}`}>{children}</div>;
 }
 
-export function Etiqueta({ children, tom = "neutro" }: { children: ReactNode; tom?: "neutro" | "ok" | "marca" }) {
-  const cores = {
+export function AreaTexto(p: ComponentProps<"textarea">) {
+  return <textarea rows={3} {...p} className={`${estiloEntrada} min-h-24 py-3 leading-normal ${p.className ?? ""}`} />;
+}
+
+export type Tom = "neutro" | "ok" | "marca" | "alerta" | "erro" | "info";
+
+export function Etiqueta({ children, tom = "neutro" }: { children: ReactNode; tom?: Tom }) {
+  const cores: Record<Tom, string> = {
     neutro: "bg-afundado text-suave",
     ok: "bg-ok-fundo text-ok",
     marca: "bg-destaque-fundo text-destaque",
+    alerta: "bg-alerta-fundo text-alerta",
+    erro: "bg-erro-fundo text-erro",
+    info: "bg-info-fundo text-info",
   };
   return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${cores[tom]}`}>{children}</span>;
 }

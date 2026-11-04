@@ -20,6 +20,8 @@
   --color-alerta-fundo: var(--alerta-fundo);
   --color-erro: var(--erro);
   --color-erro-fundo: var(--erro-fundo);
+  --color-info: var(--info);
+  --color-info-fundo: var(--info-fundo);
 
   --font-display: var(--font-archivo), "Arial Narrow", Arial, sans-serif;
   --font-sans: var(--font-public-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -40,6 +42,8 @@
   --alerta-fundo: #f7ebcf;
   --erro: #b4271f;
   --erro-fundo: #f7dcd9;
+  --info: #2c5d8a;
+  --info-fundo: #dce8f3;
   color-scheme: light;
 }
 
@@ -59,6 +63,8 @@
     --alerta-fundo: #3a2f17;
     --erro: #f07468;
     --erro-fundo: #3d1f1c;
+    --info: #7fb3e3;
+    --info-fundo: #1b2c3c;
     color-scheme: dark;
   }
 }
@@ -78,6 +84,8 @@
   --alerta-fundo: #3a2f17;
   --erro: #f07468;
   --erro-fundo: #3d1f1c;
+  --info: #7fb3e3;
+  --info-fundo: #1b2c3c;
   color-scheme: dark;
 }
 
