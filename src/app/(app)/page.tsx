@@ -1,70 +1,179 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Clock3 } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, ChevronRight, CircleDashed, Clock3, LayoutDashboard, Plus, Wrench } from "lucide-react";
 import { IconeTarefaSvg } from "@/components/icone-tarefa";
-import { BotaoLink, Etiqueta, Painel } from "@/components/ui";
-import { carregarSessao, primeiroNome, type Sessao } from "@/lib/sessao";
+import { Etiqueta } from "@/components/ui";
+import { dataBr } from "@/lib/frota/consumo";
+import { COR_SITUACAO } from "@/lib/frota/os";
+import { podeLancarBoletim, podeUsarOS } from "@/lib/frota/permissao";
+import { PRONTAS, hrefTarefa } from "@/lib/navegacao";
+import { osEmAberto, situacaoBoletins, type BoletimHoje } from "@/lib/resumo";
+import { carregarSessao, primeiroNome } from "@/lib/sessao";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { tarefasDe } from "@/lib/tarefas";
-import { usinaAtual } from "@/lib/usina-atual";
-import { escolherUsina } from "./usina-acoes";
-import { NOME_SETOR } from "@/lib/tipos";
+import { escolhaUsina } from "@/lib/usina-atual";
 
-export default async function Inicio({ searchParams }: { searchParams: Promise<{ modo?: string }> }) {
-  const sessao = await carregarSessao();
-  if (!sessao) redirect("/entrar");
-  const { modo } = await searchParams;
+export default async function Inicio() {
+  const s = await carregarSessao();
+  if (!s) redirect("/entrar");
+  if (s.acessos.length === 0) return <SemAcesso nome={s.pessoa.nome} />;
 
-  if (sessao.acessos.length === 0) return <SemAcesso nome={sessao.pessoa.nome} />;
-  if (!sessao.gestor || modo === "campo") return <ModoCampo sessao={sessao} />;
-  return <PainelGestao sessao={sessao} />;
-}
+  const escolha = await escolhaUsina(s);
+  const escopo = escolha ? (escolha.todas ? escolha.usinas : [escolha.usina]) : [];
+  const usinasBoletim = escopo.filter((u) => podeLancarBoletim(s, u.id));
+  const usinasOS = escopo.filter((u) => podeUsarOS(s, u.id));
 
-function hojeExtenso() {
-  return new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long", timeZone: "America/Bahia" }).format(new Date());
-}
+  const supabase = await criarClienteServidor();
+  const [boletins, os] = await Promise.all([situacaoBoletins(supabase, usinasBoletim), osEmAberto(supabase, usinasOS, 4)]);
+  const atalhos = tarefasDe(s.setores).filter((t) => PRONTAS.has(t.slug));
+  const codigo = new Map(escopo.map((u) => [u.id, u.codigo]));
 
-/* ---------- Modo Campo: só cartões grandes, uma tarefa por toque ---------- */
-function ModoCampo({ sessao }: { sessao: Sessao }) {
-  const tarefas = tarefasDe(sessao.setores);
-  const variosSetores = new Set(tarefas.map((t) => t.setor)).size > 1;
-  const setores = [...new Set(tarefas.map((t) => t.setor))];
+  const hoje = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long", timeZone: "America/Bahia" }).format(new Date());
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <p className="text-base capitalize text-suave">{hojeExtenso()}</p>
-        <h1 className="text-3xl font-extrabold">Olá, {primeiroNome(sessao.pessoa.nome)}</h1>
+        <p className="text-base capitalize text-suave">{hoje}</p>
+        <h1 className="text-3xl font-extrabold">Olá, {primeiroNome(s.pessoa.nome)}</h1>
+        <p className="mt-1 text-base text-suave">{escolha?.todas ? "Vendo todas as usinas" : escolha?.usina?.nome}</p>
       </div>
 
-      {setores.map((setor) => (
-        <section key={setor} className="flex flex-col gap-3">
-          {variosSetores ? <h2 className="text-sm font-bold uppercase tracking-wider text-suave">{NOME_SETOR[setor]}</h2> : null}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {tarefas
-              .filter((t) => t.setor === setor)
-              .map((t) => (
-                <Link
-                  key={t.slug}
-                  href={`/tarefa/${t.slug}`}
-                  className="flex min-h-36 flex-col justify-between gap-4 rounded-2xl border border-linha bg-superficie p-4 transition active:scale-[.98] hover:border-suave"
-                >
-                  <span className="flex size-14 items-center justify-center rounded-xl bg-marca-preto text-marca">
-                    <IconeTarefaSvg nome={t.icone} className="size-7" />
+      {/* ---------- para hoje ---------- */}
+      {boletins.length || usinasOS.length ? (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-suave">Para hoje</h2>
+          <div className="grid gap-3 md:grid-cols-2">
+            {boletins.length ? <CartaoBoletim boletins={boletins} /> : null}
+            {usinasOS.length ? (
+              <Link href="/tarefa/os" className="group flex flex-col gap-3 rounded-2xl border border-linha bg-superficie p-4 hover:border-suave">
+                <div className="flex items-center gap-3">
+                  <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-marca-preto text-marca">
+                    <Wrench className="size-6" />
                   </span>
-                  <span className="font-display text-lg font-bold leading-tight">{t.titulo}</span>
-                </Link>
-              ))}
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="font-display text-lg font-bold">Ordens de serviço</span>
+                    <span className="text-base text-suave">
+                      {os.total === 0 ? "Nenhuma em aberto" : `${os.total} em aberto${os.aguardandoPeca ? ` · ${os.aguardandoPeca} aguardando peça` : ""}`}
+                    </span>
+                  </span>
+                  <ChevronRight className="size-5 text-suave transition group-hover:translate-x-0.5" />
+                </div>
+                {os.lista.length ? (
+                  <ul className="flex flex-col divide-y divide-linha rounded-xl border border-linha">
+                    {os.lista.map((o) => (
+                      <li key={o.id} className="flex items-center gap-3 px-3 py-2.5">
+                        <span className="w-20 shrink-0 font-display font-bold tabular-nums">{o.numero}</span>
+                        <span className="min-w-0 flex-1 truncate">
+                          {escolha?.todas ? `${codigo.get(o.usina_id)} · ` : ""}
+                          <b>{o.ativo}</b> · {o.descricao}
+                        </span>
+                        <Etiqueta tom={COR_SITUACAO[o.status]}>{o.status}</Etiqueta>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </Link>
+            ) : null}
           </div>
         </section>
-      ))}
+      ) : null}
 
-      {sessao.gestor ? (
-        <BotaoLink href="/" variante="secundario" className="self-start">
-          Voltar ao painel
-        </BotaoLink>
+      {/* ---------- lançar ---------- */}
+      {atalhos.length ? (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-suave">Lançar</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {atalhos.map((t) => (
+              <Link
+                key={t.slug}
+                href={hrefTarefa(t.slug)}
+                className="flex min-h-32 flex-col justify-between gap-4 rounded-2xl border border-linha bg-superficie p-4 transition hover:border-suave active:scale-[.98]"
+              >
+                <span className="flex size-12 items-center justify-center rounded-xl bg-marca-preto text-marca">
+                  <IconeTarefaSvg nome={t.icone} className="size-6" />
+                </span>
+                <span className="font-display text-lg font-bold leading-tight">{t.titulo}</span>
+              </Link>
+            ))}
+            {usinasOS.length ? (
+              <Link
+                href="/tarefa/os/nova"
+                className="flex min-h-32 flex-col justify-between gap-4 rounded-2xl border border-marca-preto bg-marca p-4 text-marca-preto transition hover:brightness-105 active:scale-[.98]"
+              >
+                <span className="flex size-12 items-center justify-center rounded-xl bg-marca-preto text-marca">
+                  <Plus className="size-6" />
+                </span>
+                <span className="font-display text-lg font-bold leading-tight">Abrir OS</span>
+              </Link>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
+      {s.gestor ? (
+        <Link href="/gestao" className="group flex min-h-16 items-center gap-3 rounded-2xl border border-linha bg-superficie p-4 hover:border-suave">
+          <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-marca-preto text-marca">
+            <LayoutDashboard className="size-6" />
+          </span>
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="font-display text-lg font-bold">Painel de Gestão</span>
+            <span className="text-base text-suave">Produção, diesel e manutenção do mês</span>
+          </span>
+          <ArrowRight className="size-5 text-suave transition group-hover:translate-x-0.5" />
+        </Link>
       ) : null}
     </div>
+  );
+}
+
+function CartaoBoletim({ boletins }: { boletins: BoletimHoje[] }) {
+  const algumAtraso = boletins.some((b) => b.atrasados.length);
+  return (
+    <Link
+      href="/tarefa/boletim"
+      className={`group flex flex-col gap-3 rounded-2xl border bg-superficie p-4 hover:border-suave ${algumAtraso ? "border-erro/50" : "border-linha"}`}
+    >
+      <div className="flex items-center gap-3">
+        <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-marca-preto text-marca">
+          <IconeTarefaSvg nome="caminhao" className="size-6" />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="font-display text-lg font-bold">Boletim do dia</span>
+          <span className="text-base text-suave">Produção e abastecimento</span>
+        </span>
+        <ChevronRight className="size-5 text-suave transition group-hover:translate-x-0.5" />
+      </div>
+      <ul className="flex flex-col gap-2">
+        {boletins.map((b) => (
+          <li key={b.usina.id} className="flex flex-col gap-1 rounded-xl border border-linha px-3 py-2.5">
+            <span className="flex items-center gap-2">
+              {boletins.length > 1 ? <b className="w-12 shrink-0 font-display">{b.usina.codigo}</b> : null}
+              {b.hoje === "fechado" ? (
+                <span className="flex items-center gap-1.5 font-semibold text-ok">
+                  <CheckCircle2 className="size-5" /> Hoje fechado
+                </span>
+              ) : b.hoje === "aberto" ? (
+                <span className="flex items-center gap-1.5 font-semibold text-alerta">
+                  <CircleDashed className="size-5" /> Hoje salvo, falta fechar
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5 font-semibold text-tinta">
+                  <CircleDashed className="size-5 text-suave" /> Hoje ainda não lançado
+                </span>
+              )}
+            </span>
+            {b.atrasados.length ? (
+              <span className="flex items-start gap-1.5 text-sm font-semibold text-erro">
+                <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+                {b.atrasados.length === 1
+                  ? `Dia ${dataBr(b.atrasados[0])} sem fechar`
+                  : `${b.atrasados.length} dias sem fechar, desde ${dataBr(b.atrasados[0])}`}
+              </span>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    </Link>
   );
 }
 
@@ -76,97 +185,6 @@ function SemAcesso({ nome }: { nome: string }) {
       </span>
       <h1 className="text-2xl font-extrabold">Olá, {primeiroNome(nome)}</h1>
       <p className="text-lg">Seu cadastro chegou. Falta o gestor liberar suas tarefas.</p>
-    </div>
-  );
-}
-
-/* ---------- Painel de gestão ---------- */
-const FASES = [
-  { n: 0, nome: "Fundação", itens: "Login, papéis, usinas e pessoas" },
-  { n: 1, nome: "Operação (piloto VDC)", itens: "Boletim, check-list, OS e frota" },
-  { n: 2, nome: "Balança, estoque e qualidade", itens: "Cubagem, pipa, recebimento, fechamentos, laudos" },
-  { n: 3, nome: "Financeiro e comercial", itens: "Caixa, cartões, vencimentos, licenças, obras" },
-  { n: 4, nome: "Expansão", itens: "IOS, LEM, usina móvel e consolidado" },
-];
-const FASE_ATUAL = 0;
-
-async function PainelGestao({ sessao }: { sessao: Sessao }) {
-  const supabase = await criarClienteServidor();
-  const atual = await usinaAtual(sessao);
-  const [ativos, acessos] = await Promise.all([
-    supabase.from("ativo").select("usina_id").eq("ativo", true),
-    sessao.diretoria ? supabase.from("pessoa_acesso").select("pessoa_id, usina_id") : Promise.resolve({ data: [] as { pessoa_id: string; usina_id: string | null }[] }),
-  ]);
-
-  const ativosPorUsina = new Map<string, number>();
-  for (const a of (ativos.data ?? []) as { usina_id: string }[]) ativosPorUsina.set(a.usina_id, (ativosPorUsina.get(a.usina_id) ?? 0) + 1);
-  const pessoasPorUsina = new Map<string, Set<string>>();
-  for (const a of (acessos.data ?? []) as { pessoa_id: string; usina_id: string | null }[]) {
-    if (!a.usina_id) continue;
-    if (!pessoasPorUsina.has(a.usina_id)) pessoasPorUsina.set(a.usina_id, new Set());
-    pessoasPorUsina.get(a.usina_id)!.add(a.pessoa_id);
-  }
-
-  return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-base capitalize text-suave">{hojeExtenso()}</p>
-          <h1 className="text-3xl font-extrabold">Painel</h1>
-        </div>
-        <BotaoLink href="/?modo=campo" variante="secundario">
-          Ver como lançador
-        </BotaoLink>
-      </div>
-
-      <Painel titulo="Usinas" acao={sessao.diretoria ? <BotaoLink href="/cadastros/usinas" variante="secundario">Gerenciar</BotaoLink> : null}>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {sessao.usinas.map((u) => (
-            <div
-              key={u.id}
-              className={`flex flex-col gap-2 rounded-xl border p-4 ${u.id === atual?.id ? "border-marca-preto bg-destaque-fundo" : "border-linha bg-afundado"}`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-display text-2xl font-extrabold">{u.codigo}</span>
-                {u.id === atual?.id ? <Etiqueta tom="marca">Em uso</Etiqueta> : u.ativa ? <Etiqueta tom="ok">Ativa</Etiqueta> : <Etiqueta>Inativa</Etiqueta>}
-              </div>
-              <span className="text-base">{u.nome}</span>
-              <span className="text-sm text-suave">
-                {ativosPorUsina.get(u.id) ?? 0} ativos
-                {sessao.diretoria ? ` · ${pessoasPorUsina.get(u.id)?.size ?? 0} pessoas` : ""}
-              </span>
-              {u.ativa && u.id !== atual?.id ? (
-                <form action={escolherUsina.bind(null, u.codigo)}>
-                  <button type="submit" className="min-h-12 w-full rounded-xl border border-linha bg-superficie px-4 font-semibold hover:border-suave">
-                    Trabalhar na {u.codigo}
-                  </button>
-                </form>
-              ) : null}
-            </div>
-          ))}
-        </div>
-      </Painel>
-
-      <Painel titulo="Andamento da implantação">
-        <ol className="flex flex-col gap-2">
-          {FASES.map((f) => (
-            <li key={f.n} className="flex items-start gap-3 rounded-xl border border-linha p-3">
-              <span
-                className={`flex size-9 shrink-0 items-center justify-center rounded-full font-display font-bold ${
-                  f.n === FASE_ATUAL ? "bg-marca text-marca-preto" : f.n < FASE_ATUAL ? "bg-ok-fundo text-ok" : "bg-afundado text-suave"
-                }`}
-              >
-                {f.n}
-              </span>
-              <span className="flex flex-col">
-                <span className="font-semibold">{f.nome}</span>
-                <span className="text-sm text-suave">{f.itens}</span>
-              </span>
-              {f.n === FASE_ATUAL ? <span className="ml-auto"><Etiqueta tom="marca">Em andamento</Etiqueta></span> : null}
-            </li>
-          ))}
-        </ol>
-      </Painel>
     </div>
   );
 }

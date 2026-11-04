@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { BotaoLink, Etiqueta, Painel } from "@/components/ui";
+import { Etiqueta, Painel } from "@/components/ui";
 import { carregarSessao } from "@/lib/sessao";
 import { alternarUsina } from "../acoes";
 import { FormUsina } from "./form";
@@ -13,8 +13,10 @@ export default async function Usinas() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-extrabold">Usinas</h1>
-        <BotaoLink href="/cadastros" variante="secundario">Cadastros</BotaoLink>
+        <div>
+          <p className="text-sm font-bold uppercase tracking-wider text-suave">Configurações › Cadastros</p>
+          <h1 className="text-3xl font-extrabold">Usinas</h1>
+        </div>
       </div>
 
       <Painel>

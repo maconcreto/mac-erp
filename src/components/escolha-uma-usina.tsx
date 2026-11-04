@@ -1,36 +1,24 @@
-import { Factory } from "lucide-react";
-import { escolherUsina } from "@/app/(app)/usina-acoes";
+import { ArrowUp, Layers } from "lucide-react";
 import type { Usina } from "@/lib/tipos";
 
 /**
  * Telas de lançamento (boletim, abrir OS…) trabalham numa usina só.
- * Com "Todas" escolhido no topo, pedem a usina com botões grandes; a escolha muda o topo também.
+ * Com "Todas" escolhido no topo, pedem para escolher a usina lá — o seletor do topo é o único da aplicação.
  */
 export function EscolhaUmaUsina({ titulo, usinas }: { titulo: string; usinas: Usina[] }) {
   return (
-    <div className="mx-auto flex max-w-xl flex-col gap-5 py-6">
-      <div>
-        <h1 className="text-3xl font-extrabold">{titulo}</h1>
-        <p className="mt-1 text-lg text-suave">Esta tela é de uma usina só. Em qual você vai lançar?</p>
-      </div>
-      <div className="grid gap-2 sm:grid-cols-2">
-        {usinas.map((u) => (
-          <form key={u.id} action={escolherUsina.bind(null, u.codigo)}>
-            <button
-              type="submit"
-              className="flex min-h-20 w-full items-center gap-4 rounded-2xl border border-linha bg-superficie px-4 text-left transition hover:border-suave active:scale-[.98]"
-            >
-              <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-marca-preto text-marca">
-                <Factory className="size-6" aria-hidden />
-              </span>
-              <span className="flex min-w-0 flex-col">
-                <span className="font-display text-2xl font-extrabold leading-tight">{u.codigo}</span>
-                <span className="truncate text-sm text-suave">{u.nome}</span>
-              </span>
-            </button>
-          </form>
-        ))}
-      </div>
+    <div className="mx-auto flex max-w-xl flex-col items-center gap-4 py-10 text-center">
+      <span className="flex size-16 items-center justify-center rounded-2xl bg-marca-preto text-marca">
+        <Layers className="size-8" aria-hidden />
+      </span>
+      <h1 className="text-3xl font-extrabold">{titulo}</h1>
+      <p className="text-lg">
+        Você está vendo <b>todas as usinas</b>. Para lançar, escolha uma usina no seletor do topo da tela.
+      </p>
+      <p className="flex items-center gap-2 text-base text-suave">
+        <ArrowUp className="size-5" aria-hidden />
+        Disponível para você: {usinas.map((u) => u.codigo).join(", ")}
+      </p>
     </div>
   );
 }

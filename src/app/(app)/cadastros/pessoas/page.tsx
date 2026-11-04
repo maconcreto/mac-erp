@@ -24,9 +24,11 @@ export default async function Pessoas() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-extrabold">Equipe</h1>
+        <div>
+          <p className="text-sm font-bold uppercase tracking-wider text-suave">Configurações › Cadastros</p>
+          <h1 className="text-3xl font-extrabold">Equipe</h1>
+        </div>
         <div className="flex gap-2">
-          <BotaoLink href="/cadastros" variante="secundario">Cadastros</BotaoLink>
           <BotaoLink href="/cadastros/pessoas/nova">
             <UserPlus className="size-5" /> Novo usuário
           </BotaoLink>

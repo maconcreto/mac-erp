@@ -154,7 +154,7 @@ export async function definirSenha(_: Resultado, dados: FormData): Promise<Resul
   if (erroSenha) return { erro: erroSenha };
   const { error } = await criarClienteAdmin().auth.admin.updateUserById(id, { password: senha });
   if (error) return { erro: "Não foi possível trocar a senha." };
-  return { ok: "Senha nova definida. Passe para a pessoa; ela pode trocar depois em Minha conta." };
+  return { ok: "Senha nova definida. Passe para a pessoa; ela pode trocar depois em Perfil." };
 }
 
 export async function alternarPessoa(dados: FormData) {
