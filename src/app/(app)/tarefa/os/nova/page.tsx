@@ -4,7 +4,8 @@ import { ativosDaUsina } from "@/lib/frota/os-dados";
 import { podeUsarOS } from "@/lib/frota/permissao";
 import { carregarSessao } from "@/lib/sessao";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { usinaAtual } from "@/lib/usina-atual";
+import { EscolhaUmaUsina } from "@/components/escolha-uma-usina";
+import { escolhaUsina } from "@/lib/usina-atual";
 import { AssistenteOS } from "./form";
 
 export const metadata = { title: "Abrir OS" };
@@ -13,7 +14,12 @@ export default async function NovaOS({ searchParams }: { searchParams: Promise<{
   const s = await carregarSessao();
   if (!s) redirect("/entrar");
   const sp = await searchParams;
-  const usina = await usinaAtual(s);
+  const escolha = await escolhaUsina(s);
+  if (escolha?.todas) {
+    const minhas = escolha.usinas.filter((u) => podeUsarOS(s, u.id));
+    if (minhas.length) return <EscolhaUmaUsina titulo="Abrir OS" usinas={minhas} />;
+  }
+  const usina = escolha?.usina ?? null;
   if (!usina || !podeUsarOS(s, usina.id)) {
     return (
       <Painel titulo="Abrir OS">

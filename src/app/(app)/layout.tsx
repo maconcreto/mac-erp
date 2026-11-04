@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { LogOut, Settings, UserRound } from "lucide-react";
 import { SeletorUsina } from "@/components/seletor-usina";
 import { Logo } from "@/components/ui";
-import { usinaAtual, usinasAtivas } from "@/lib/usina-atual";
+import { escolhaUsina } from "@/lib/usina-atual";
 import { sair } from "@/app/entrar/acoes";
 import { carregarSessao, primeiroNome } from "@/lib/sessao";
 import { supabaseConfigurado } from "@/lib/supabase/config";
@@ -24,8 +24,8 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
   const sessao = await carregarSessao();
   if (!sessao) redirect("/entrar");
 
-  const atual = await usinaAtual(sessao);
-  const ativas = usinasAtivas(sessao).map((u) => ({ codigo: u.codigo, nome: u.nome, cidade: u.cidade }));
+  const escolha = await escolhaUsina(sessao);
+  const ativas = (escolha?.usinas ?? []).map((u) => ({ codigo: u.codigo, nome: u.nome, cidade: u.cidade }));
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -35,7 +35,9 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
             <Logo variante="simbolo" className="w-10 lg:hidden" />
             <Logo variante="horizontal" className="hidden w-[168px] lg:block" />
           </Link>
-          {atual ? <SeletorUsina atual={{ codigo: atual.codigo, nome: atual.nome, cidade: atual.cidade }} usinas={ativas} /> : null}
+          {escolha ? (
+            <SeletorUsina atual={escolha.usina ? { codigo: escolha.usina.codigo, nome: escolha.usina.nome, cidade: escolha.usina.cidade } : null} usinas={ativas} />
+          ) : null}
 
           <nav className="ml-auto flex items-center gap-0.5 text-sm font-semibold sm:gap-1">
             {sessao.gestor ? (

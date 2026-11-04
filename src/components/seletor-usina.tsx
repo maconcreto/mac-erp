@@ -2,17 +2,22 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Check, ChevronDown, Factory } from "lucide-react";
+import { Check, ChevronDown, Factory, Layers } from "lucide-react";
 import { escolherUsina } from "@/app/(app)/usina-acoes";
 
 type U = { codigo: string; nome: string; cidade: string | null };
+const TODAS = "TODAS";
 
-/** Usina de trabalho, sempre visível no topo. Com uma usina só, mostra o nome sem opção de trocar. */
-export function SeletorUsina({ atual, usinas }: { atual: U; usinas: U[] }) {
+/**
+ * Usina de trabalho, sempre visível no topo.
+ * `atual` null = "Todas as usinas" (visão consolidada). Com uma usina só, mostra o nome sem opção de trocar.
+ */
+export function SeletorUsina({ atual, usinas }: { atual: U | null; usinas: U[] }) {
   const router = useRouter();
   const [aberto, setAberto] = useState(false);
   const [trocando, iniciar] = useTransition();
   const caixa = useRef<HTMLDivElement>(null);
+  const todas = atual === null;
 
   useEffect(() => {
     if (!aberto) return;
@@ -30,23 +35,55 @@ export function SeletorUsina({ atual, usinas }: { atual: U; usinas: U[] }) {
     };
   }, [aberto]);
 
+  function escolher(codigo: string, marcada: boolean) {
+    setAberto(false);
+    if (marcada) return;
+    iniciar(async () => {
+      await escolherUsina(codigo);
+      router.refresh();
+    });
+  }
+
+  const Icone = todas ? Layers : Factory;
   const etiqueta = (
     <>
-      <Factory className="size-5 shrink-0 text-marca" aria-hidden />
+      <Icone className="size-5 shrink-0 text-marca" aria-hidden />
       <span className="flex min-w-0 flex-col items-start leading-tight">
-        <span className="font-display text-lg font-extrabold tracking-wide text-marca">{trocando ? "…" : atual.codigo}</span>
-        <span className="hidden max-w-48 truncate text-[11px] font-semibold uppercase tracking-wider text-[#c9d0c2] md:block">{atual.nome}</span>
+        <span className="font-display text-lg font-extrabold tracking-wide text-marca">{trocando ? "…" : todas ? "Todas" : atual.codigo}</span>
+        <span className="hidden max-w-48 truncate text-[11px] font-semibold uppercase tracking-wider text-[#c9d0c2] md:block">
+          {todas ? `${usinas.length} usinas juntas` : atual.nome}
+        </span>
       </span>
     </>
   );
 
-  if (usinas.length < 2) {
+  if (usinas.length < 2 && atual) {
     return (
       <span className="flex min-h-12 items-center gap-2 rounded-xl border border-white/15 px-3" title={atual.nome}>
         {etiqueta}
       </span>
     );
   }
+
+  const opcao = (codigo: string, marcada: boolean, titulo: string, sub: string | null, rotulo: React.ReactNode) => (
+    <li key={codigo}>
+      <button
+        type="button"
+        role="option"
+        aria-selected={marcada}
+        disabled={trocando}
+        onClick={() => escolher(codigo, marcada)}
+        className={`flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left hover:bg-afundado ${marcada ? "bg-destaque-fundo" : ""}`}
+      >
+        <span className="flex w-14 shrink-0 items-center font-display text-xl font-extrabold">{rotulo}</span>
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="truncate font-semibold">{titulo}</span>
+          {sub ? <span className="truncate text-sm text-suave">{sub}</span> : null}
+        </span>
+        {marcada ? <Check className="size-5 shrink-0 text-destaque" aria-hidden /> : null}
+      </button>
+    </li>
+  );
 
   return (
     <div ref={caixa} className="relative">
@@ -55,7 +92,7 @@ export function SeletorUsina({ atual, usinas }: { atual: U; usinas: U[] }) {
         onClick={() => setAberto(!aberto)}
         aria-haspopup="listbox"
         aria-expanded={aberto}
-        aria-label={`Usina: ${atual.nome}. Trocar usina`}
+        aria-label={`Usina: ${todas ? "todas" : atual.nome}. Trocar usina`}
         className="flex min-h-12 items-center gap-2 rounded-xl border border-marca/50 bg-white/5 px-3 hover:border-marca"
       >
         {etiqueta}
@@ -65,36 +102,9 @@ export function SeletorUsina({ atual, usinas }: { atual: U; usinas: U[] }) {
       {aberto ? (
         <div className="absolute left-0 top-full z-30 mt-2 w-[min(320px,calc(100vw-32px))] overflow-hidden rounded-2xl border border-linha bg-superficie text-tinta shadow-xl">
           <p className="border-b border-linha px-4 py-3 text-xs font-bold uppercase tracking-wider text-suave">Trabalhar na usina</p>
-          <ul role="listbox" aria-label="Usinas">
-            {usinas.map((u) => {
-              const marcada = u.codigo === atual.codigo;
-              return (
-                <li key={u.codigo}>
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected={marcada}
-                    disabled={trocando}
-                    onClick={() => {
-                      setAberto(false);
-                      if (marcada) return;
-                      iniciar(async () => {
-                        await escolherUsina(u.codigo);
-                        router.refresh();
-                      });
-                    }}
-                    className={`flex min-h-16 w-full items-center gap-3 px-4 py-2 text-left hover:bg-afundado ${marcada ? "bg-destaque-fundo" : ""}`}
-                  >
-                    <span className="w-14 shrink-0 font-display text-xl font-extrabold">{u.codigo}</span>
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate font-semibold">{u.nome}</span>
-                      {u.cidade ? <span className="truncate text-sm text-suave">{u.cidade}</span> : null}
-                    </span>
-                    {marcada ? <Check className="size-5 shrink-0 text-destaque" aria-hidden /> : null}
-                  </button>
-                </li>
-              );
-            })}
+          <ul role="listbox" aria-label="Usinas" className="divide-y divide-linha">
+            {opcao(TODAS, todas, "Todas as usinas", "Consolidado, para consulta e resultados", <Layers className="size-6" aria-hidden />)}
+            {usinas.map((u) => opcao(u.codigo, u.codigo === atual?.codigo, u.nome, u.cidade, u.codigo))}
           </ul>
         </div>
       ) : null}

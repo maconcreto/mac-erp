@@ -8,7 +8,7 @@ import { ativosDaUsina, normalizarOS } from "@/lib/frota/os-dados";
 import { gestorDaUsina, podeUsarOS } from "@/lib/frota/permissao";
 import { carregarSessao } from "@/lib/sessao";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { usinaAtual } from "@/lib/usina-atual";
+import { escolhaUsina } from "@/lib/usina-atual";
 
 export const metadata = { title: "Ordens de serviço" };
 
@@ -25,30 +25,35 @@ export default async function ListaOS({ searchParams }: { searchParams: Promise<
   if (!s) redirect("/entrar");
   const sp = await searchParams;
 
-  const usina = await usinaAtual(s);
-  if (!usina || !podeUsarOS(s, usina.id)) {
+  const escolha = await escolhaUsina(s);
+  const usinas = (escolha?.usinas ?? []).filter((u) => podeUsarOS(s, u.id) && (escolha?.todas || u.id === escolha?.usina?.id));
+  if (!usinas.length) {
+    const u = escolha?.usina;
     return (
       <Painel titulo="Ordens de serviço">
         <Aviso>
-          {usina
-            ? `Você não tem acesso às OS da ${usina.codigo}. Troque a usina no topo da tela ou peça à diretoria para liberar o setor Operação.`
+          {u
+            ? `Você não tem acesso às OS da ${u.codigo}. Troque a usina no topo da tela ou peça à diretoria para liberar o setor Operação.`
             : "Você não tem acesso às OS de nenhuma usina. Peça à diretoria para liberar o setor Operação."}
         </Aviso>
       </Painel>
     );
   }
-  const gestor = gestorDaUsina(s, usina.id);
+  const todas = !!escolha?.todas;
+  const ids = usinas.map((u) => u.id);
+  const codUsina = new Map(usinas.map((u) => [u.id, u.codigo]));
+  const gestor = usinas.some((u) => gestorDaUsina(s, u.id));
   const filtro = FILTROS.some((f) => f.k === sp.filtro) ? sp.filtro! : "abertas";
   const q = (sp.q ?? "").trim();
 
   const supabase = await criarClienteServidor();
-  const ativos = await ativosDaUsina(supabase, usina.id);
+  const ativos = (await Promise.all(usinas.map((u) => ativosDaUsina(supabase, u.id).then((l) => l.map((a) => ({ ...a, usina: u.codigo })))))).flat();
   const codigo = new Map(ativos.map((a) => [a.id, a.codigo]));
 
   let consulta = supabase
     .from("ordem_servico")
     .select("id, usina_id, numero, ativo_id, ativo_texto, classe, tipo, status, abertura, termino, oficina, nome_oficina, descricao, valor, compras, anexos, nf_arquivos, origem")
-    .eq("usina_id", usina.id)
+    .in("usina_id", ids)
     .order("ano", { ascending: false })
     .order("seq", { ascending: false })
     .limit(200);
@@ -64,11 +69,11 @@ export default async function ListaOS({ searchParams }: { searchParams: Promise<
   // Na visão "Em aberto" as últimas fechadas aparecem embaixo, para o histórico nunca parecer sumido.
   const recentes =
     filtro === "abertas" && !q && !sp.ativo
-      ? supabase.from("ordem_servico").select(CAMPOS_LISTA).eq("usina_id", usina.id).not("status", "in", `(${EM_ABERTO.map((s) => `"${s}"`).join(",")})`).order("ano", { ascending: false }).order("seq", { ascending: false }).limit(10)
+      ? supabase.from("ordem_servico").select(CAMPOS_LISTA).in("usina_id", ids).not("status", "in", `(${EM_ABERTO.map((s) => `"${s}"`).join(",")})`).order("ano", { ascending: false }).order("seq", { ascending: false }).limit(10)
       : Promise.resolve({ data: [] });
   const [{ data }, contagem, recRes] = await Promise.all([
     consulta,
-    supabase.from("ordem_servico").select("id", { count: "exact", head: true }).eq("usina_id", usina.id).in("status", EM_ABERTO),
+    supabase.from("ordem_servico").select("id", { count: "exact", head: true }).in("usina_id", ids).in("status", EM_ABERTO),
     recentes,
   ]);
   const lista = ((data ?? []) as unknown as Record<string, unknown>[]).map(normalizarOS);
@@ -87,7 +92,7 @@ export default async function ListaOS({ searchParams }: { searchParams: Promise<
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-sm font-bold uppercase tracking-wider text-suave">{usina.nome}</p>
+          <p className="text-sm font-bold uppercase tracking-wider text-suave">{todas ? `Todas as usinas · ${usinas.map((u) => u.codigo).join(", ")}` : usinas[0].nome}</p>
           <h1 className="text-3xl font-extrabold">Ordens de serviço</h1>
         </div>
         <BotaoLink href="/tarefa/os/nova" tamanho="lg" className="sm:w-auto">
@@ -117,7 +122,7 @@ export default async function ListaOS({ searchParams }: { searchParams: Promise<
             <option value="">Todos os veículos</option>
             {ativos.map((a) => (
               <option key={a.id} value={a.id}>
-                {a.codigo}
+                {todas ? `${a.usina} · ${a.codigo}` : a.codigo}
               </option>
             ))}
           </select>
@@ -141,7 +146,7 @@ export default async function ListaOS({ searchParams }: { searchParams: Promise<
         <ul className="flex flex-col gap-2">
           {lista.map((o) => (
             <li key={o.id}>
-              <CartaoOS o={o} ativo={(o.ativo_id && codigo.get(o.ativo_id)) || o.ativo_texto || "—"} />
+              <CartaoOS o={o} ativo={(o.ativo_id && codigo.get(o.ativo_id)) || o.ativo_texto || "—"} usina={todas ? codUsina.get(o.usina_id) : undefined} />
             </li>
           ))}
         </ul>
@@ -158,7 +163,7 @@ export default async function ListaOS({ searchParams }: { searchParams: Promise<
           <ul className="flex flex-col gap-2">
             {ultimas.map((o) => (
               <li key={o.id}>
-                <CartaoOS o={o} ativo={(o.ativo_id && codigo.get(o.ativo_id)) || o.ativo_texto || "—"} />
+                <CartaoOS o={o} ativo={(o.ativo_id && codigo.get(o.ativo_id)) || o.ativo_texto || "—"} usina={todas ? codUsina.get(o.usina_id) : undefined} />
               </li>
             ))}
           </ul>
@@ -175,7 +180,7 @@ export default async function ListaOS({ searchParams }: { searchParams: Promise<
   );
 }
 
-function CartaoOS({ o, ativo }: { o: OS; ativo: string }) {
+function CartaoOS({ o, ativo, usina }: { o: OS; ativo: string; usina?: string }) {
   const nota = semNota(o);
   const valor = totalOS(o);
   return (
@@ -189,6 +194,7 @@ function CartaoOS({ o, ativo }: { o: OS; ativo: string }) {
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          {usina ? <Etiqueta tom="marca">{usina}</Etiqueta> : null}
           <b className="font-display text-lg">{ativo}</b>
           <Etiqueta tom={COR_SITUACAO[o.status]}>{o.status}</Etiqueta>
           {nota ? <Etiqueta tom="alerta">Falta nota</Etiqueta> : null}

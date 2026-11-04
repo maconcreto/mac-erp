@@ -81,4 +81,4 @@ npm run dev
 5. Nada se apaga: use situação "cancelado", com motivo, autor e data.
 6. Toda mudança passa antes pelo endereço de teste da Vercel (Preview) e é validada na VDC.
 7. Limites, tolerâncias e preços de referência são parâmetros editáveis, não números no código.
-8. A usina de trabalho é escolhida só no cabeçalho (`usinaAtual` em `src/lib/usina-atual.ts`). Nenhuma tela tem seletor de usina próprio.
+8. A usina de trabalho é escolhida só no cabeçalho (`escolhaUsina` em `src/lib/usina-atual.ts`), com a opção **Todas** para quem vê mais de uma usina. Nenhuma tela tem seletor de usina próprio: telas de consulta juntam as usinas quando "Todas" está escolhido; telas de lançamento pedem a usina com `EscolhaUmaUsina`.

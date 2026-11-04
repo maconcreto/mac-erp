@@ -6,7 +6,8 @@ import { gestorDaUsina, podeLancarBoletim } from "@/lib/frota/permissao";
 import { derivar, frotaDe, usinaDe } from "@/lib/frota/regras";
 import { carregarSessao } from "@/lib/sessao";
 import { criarClienteServidor } from "@/lib/supabase/server";
-import { usinaAtual } from "@/lib/usina-atual";
+import { EscolhaUmaUsina } from "@/components/escolha-uma-usina";
+import { escolhaUsina } from "@/lib/usina-atual";
 import { FormBoletim } from "./form";
 
 export const metadata = { title: "Boletim do dia" };
@@ -18,7 +19,12 @@ export default async function PaginaBoletim({ searchParams }: { searchParams: Pr
   if (!s) redirect("/entrar");
   const sp = await searchParams;
 
-  const usina = await usinaAtual(s);
+  const escolha = await escolhaUsina(s);
+  if (escolha?.todas) {
+    const minhas = escolha.usinas.filter((u) => podeLancarBoletim(s, u.id));
+    if (minhas.length) return <EscolhaUmaUsina titulo="Boletim do dia" usinas={minhas} />;
+  }
+  const usina = escolha?.usina ?? null;
   if (!usina || !podeLancarBoletim(s, usina.id)) {
     return (
       <Painel titulo="Boletim do dia">
