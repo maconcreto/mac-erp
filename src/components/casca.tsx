@@ -13,9 +13,9 @@ type Pessoa = { nome: string; papel: string; inicial: string };
 type Props = { menu: Menu; pessoa: Pessoa; seletor: ReactNode; children: ReactNode };
 
 /**
- * Estrutura de todas as telas logadas:
- * menu lateral fixo no computador; no celular ele abre pelo ☰ por cima da tela.
- * O topo mostra só o essencial: menu, marca e a usina de trabalho.
+ * Estrutura de todas as telas logadas.
+ * Topo: logo e usina de trabalho à esquerda, ☰ à direita.
+ * O menu (com o perfil) abre pela direita, por cima da tela, no celular e no computador.
  */
 export function Casca({ menu, pessoa, seletor, children }: Props) {
   const [aberto, setAberto] = useState(false);
@@ -35,45 +35,34 @@ export function Casca({ menu, pessoa, seletor, children }: Props) {
   }, [aberto]);
 
   return (
-    <div className="min-h-dvh lg:pl-72">
-      {/* ---------- menu lateral: fixo no computador ---------- */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 lg:block">
-        <Lateral menu={menu} pessoa={pessoa} caminho={caminho} />
-      </aside>
-
-      {/* ---------- menu lateral: gaveta no celular ---------- */}
+    <div className="min-h-dvh">
+      {/* ---------- menu: gaveta que abre pela direita, em qualquer tela ---------- */}
       {aberto ? (
-        <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
+        <div className="fixed inset-0 z-40" role="dialog" aria-modal="true" aria-label="Menu">
           <button type="button" aria-label="Fechar menu" onClick={() => setAberto(false)} className="absolute inset-0 bg-black/55" />
-          <div className="absolute inset-y-0 left-0 w-[min(320px,86vw)] shadow-2xl">
+          <div className="absolute inset-y-0 right-0 w-[min(340px,88vw)] shadow-2xl">
             <Lateral menu={menu} pessoa={pessoa} caminho={caminho} aoFechar={() => setAberto(false)} />
           </div>
         </div>
       ) : null}
 
-      {/* ---------- topo ---------- */}
+      {/* ---------- topo: logo e usina à esquerda, menu à direita ---------- */}
       <header className="sticky top-0 z-20 border-b-[3px] border-marca bg-marca-preto pt-[env(safe-area-inset-top)] text-[#f2f5ee]">
-        <div className="mx-auto flex max-w-6xl items-center gap-2 py-2.5 pl-[max(8px,env(safe-area-inset-left))] pr-[max(16px,env(safe-area-inset-right))] sm:gap-3 lg:pl-6">
+        <div className="mx-auto flex max-w-6xl items-center gap-2 py-2.5 pl-[max(16px,env(safe-area-inset-left))] pr-[max(8px,env(safe-area-inset-right))] sm:gap-4">
+          <Link href="/" aria-label="Início" className="flex min-h-12 shrink-0 items-center">
+            <Logo variante="simbolo" className="w-9 sm:hidden" />
+            <Logo variante="horizontal" className="hidden w-40 sm:block" />
+          </Link>
+          {seletor}
           <button
             type="button"
             onClick={() => setAberto(true)}
             aria-label="Abrir menu"
             aria-expanded={aberto}
-            className="flex size-12 shrink-0 items-center justify-center rounded-xl hover:bg-white/10 lg:hidden"
+            className="ml-auto flex size-12 shrink-0 items-center justify-center rounded-xl hover:bg-white/10"
           >
-            <IconeMenu className="size-6" />
+            <IconeMenu className="size-7" />
           </button>
-          <Link href="/" aria-label="Início" className="flex min-h-12 shrink-0 items-center lg:hidden">
-            <Logo variante="simbolo" className="w-9" />
-          </Link>
-          {seletor}
-          <Link
-            href="/conta"
-            aria-label={`Perfil de ${pessoa.nome}`}
-            className="ml-auto flex size-11 shrink-0 items-center justify-center rounded-full border border-marca/50 font-display text-lg font-bold text-marca hover:border-marca"
-          >
-            {pessoa.inicial}
-          </Link>
         </div>
       </header>
 
@@ -139,9 +128,7 @@ function Lateral({ menu, pessoa, caminho, aoFechar }: { menu: Menu; pessoa: Pess
   return (
     <nav aria-label="Menu principal" className="flex h-full flex-col bg-marca-preto pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] text-[#e9eee3]">
       <div className="flex items-center justify-between gap-2 border-b border-white/10 px-4 py-4">
-        <Link href="/" aria-label="Início">
-          <Logo variante="horizontal" className="w-44" />
-        </Link>
+        <span className="font-display text-xl font-extrabold">Menu</span>
         {aoFechar ? (
           <button type="button" onClick={aoFechar} aria-label="Fechar menu" className="flex size-11 items-center justify-center rounded-xl hover:bg-white/10">
             <X className="size-6" />
