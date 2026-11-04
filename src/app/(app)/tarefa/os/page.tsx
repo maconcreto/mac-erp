@@ -55,11 +55,20 @@ export default async function ListaOS({ searchParams }: { searchParams: Promise<
     const t = q.replace(/[%,()]/g, " ");
     consulta = consulta.or(`numero.ilike.%${t}%,descricao.ilike.%${t}%,servicos.ilike.%${t}%,nome_oficina.ilike.%${t}%,colaborador.ilike.%${t}%,ativo_texto.ilike.%${t}%`);
   }
-  const [{ data }, contagem] = await Promise.all([
+  const CAMPOS_LISTA =
+    "id, usina_id, numero, ativo_id, ativo_texto, classe, tipo, status, abertura, termino, oficina, nome_oficina, descricao, valor, compras, anexos, nf_arquivos, origem";
+  // Na visão "Em aberto" as últimas fechadas aparecem embaixo, para o histórico nunca parecer sumido.
+  const recentes =
+    filtro === "abertas" && !q && !sp.ativo
+      ? supabase.from("ordem_servico").select(CAMPOS_LISTA).eq("usina_id", usina.id).not("status", "in", `(${EM_ABERTO.map((s) => `"${s}"`).join(",")})`).order("ano", { ascending: false }).order("seq", { ascending: false }).limit(10)
+      : Promise.resolve({ data: [] });
+  const [{ data }, contagem, recRes] = await Promise.all([
     consulta,
     supabase.from("ordem_servico").select("id", { count: "exact", head: true }).eq("usina_id", usina.id).in("status", EM_ABERTO),
+    recentes,
   ]);
   const lista = ((data ?? []) as unknown as Record<string, unknown>[]).map(normalizarOS);
+  const ultimas = ((recRes.data ?? []) as unknown as Record<string, unknown>[]).map(normalizarOS);
   const nAbertas = contagem.count ?? 0;
   const total = lista.reduce((t, o) => t + totalOS(o), 0);
 
@@ -147,6 +156,24 @@ export default async function ListaOS({ searchParams }: { searchParams: Promise<
           ))}
         </ul>
       )}
+
+      {ultimas.length ? (
+        <section className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-lg font-bold">Concluídas recentemente</h2>
+            <Link href={link({ filtro: "concluidas" })} className="flex min-h-12 items-center font-semibold text-destaque underline-offset-4 hover:underline">
+              Ver todas as concluídas
+            </Link>
+          </div>
+          <ul className="flex flex-col gap-2">
+            {ultimas.map((o) => (
+              <li key={o.id}>
+                <CartaoOS o={o} ativo={(o.ativo_id && codigo.get(o.ativo_id)) || o.ativo_texto || "—"} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {gestor && lista.length ? (
         <p className="text-right text-sm text-suave">
