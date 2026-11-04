@@ -6,6 +6,8 @@ import { BotaoLink, Etiqueta, Painel } from "@/components/ui";
 import { carregarSessao, primeiroNome, type Sessao } from "@/lib/sessao";
 import { criarClienteServidor } from "@/lib/supabase/server";
 import { tarefasDe } from "@/lib/tarefas";
+import { usinaAtual } from "@/lib/usina-atual";
+import { escolherUsina } from "./usina-acoes";
 import { NOME_SETOR } from "@/lib/tipos";
 
 export default async function Inicio({ searchParams }: { searchParams: Promise<{ modo?: string }> }) {
@@ -90,6 +92,7 @@ const FASE_ATUAL = 0;
 
 async function PainelGestao({ sessao }: { sessao: Sessao }) {
   const supabase = await criarClienteServidor();
+  const atual = await usinaAtual(sessao);
   const [ativos, acessos] = await Promise.all([
     supabase.from("ativo").select("usina_id").eq("ativo", true),
     sessao.diretoria ? supabase.from("pessoa_acesso").select("pessoa_id, usina_id") : Promise.resolve({ data: [] as { pessoa_id: string; usina_id: string | null }[] }),
@@ -119,16 +122,26 @@ async function PainelGestao({ sessao }: { sessao: Sessao }) {
       <Painel titulo="Usinas" acao={sessao.diretoria ? <BotaoLink href="/cadastros/usinas" variante="secundario">Gerenciar</BotaoLink> : null}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {sessao.usinas.map((u) => (
-            <div key={u.id} className="flex flex-col gap-2 rounded-xl border border-linha bg-afundado p-4">
+            <div
+              key={u.id}
+              className={`flex flex-col gap-2 rounded-xl border p-4 ${u.id === atual?.id ? "border-marca-preto bg-destaque-fundo" : "border-linha bg-afundado"}`}
+            >
               <div className="flex items-center justify-between gap-2">
                 <span className="font-display text-2xl font-extrabold">{u.codigo}</span>
-                {u.ativa ? <Etiqueta tom="ok">Ativa</Etiqueta> : <Etiqueta>Inativa</Etiqueta>}
+                {u.id === atual?.id ? <Etiqueta tom="marca">Em uso</Etiqueta> : u.ativa ? <Etiqueta tom="ok">Ativa</Etiqueta> : <Etiqueta>Inativa</Etiqueta>}
               </div>
               <span className="text-base">{u.nome}</span>
               <span className="text-sm text-suave">
                 {ativosPorUsina.get(u.id) ?? 0} ativos
                 {sessao.diretoria ? ` · ${pessoasPorUsina.get(u.id)?.size ?? 0} pessoas` : ""}
               </span>
+              {u.ativa && u.id !== atual?.id ? (
+                <form action={escolherUsina.bind(null, u.codigo)}>
+                  <button type="submit" className="min-h-12 w-full rounded-xl border border-linha bg-superficie px-4 font-semibold hover:border-suave">
+                    Trabalhar na {u.codigo}
+                  </button>
+                </form>
+              ) : null}
             </div>
           ))}
         </div>

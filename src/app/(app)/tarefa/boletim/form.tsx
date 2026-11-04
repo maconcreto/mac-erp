@@ -134,7 +134,7 @@ export function FormBoletim(p: Props) {
   });
 
   function ir(data: string) {
-    router.push(`/tarefa/boletim?usina=${p.usina.codigo}&data=${data}`);
+    router.push(`/tarefa/boletim?data=${data}`);
   }
   const dia = (delta: number) => {
     const d = new Date(p.data + "T12:00:00Z");
@@ -198,7 +198,7 @@ export function FormBoletim(p: Props) {
         <Aviso tipo="erro">
           <b>Os lançamentos seguem a ordem dos dias.</b> Para lançar {dataBr(p.data)}, feche antes:{" "}
           {p.pendentes.slice(0, 10).map((d) => (
-            <Link key={d} href={`/tarefa/boletim?usina=${p.usina.codigo}&data=${d}`} className="mr-2 inline-block rounded-lg border border-erro/40 px-2 py-1 underline">
+            <Link key={d} href={`/tarefa/boletim?data=${d}`} className="mr-2 inline-block rounded-lg border border-erro/40 px-2 py-1 underline">
               {dataBr(d)}
             </Link>
           ))}
@@ -211,7 +211,7 @@ export function FormBoletim(p: Props) {
         <Aviso tipo="alerta">
           <b>Dias ainda em aberto:</b>{" "}
           {p.abertos.map((d) => (
-            <Link key={d} href={`/tarefa/boletim?usina=${p.usina.codigo}&data=${d}`} className="mr-2 inline-block rounded-lg border border-alerta/40 px-2 py-1 underline">
+            <Link key={d} href={`/tarefa/boletim?data=${d}`} className="mr-2 inline-block rounded-lg border border-alerta/40 px-2 py-1 underline">
               {dataBr(d)}
             </Link>
           ))}

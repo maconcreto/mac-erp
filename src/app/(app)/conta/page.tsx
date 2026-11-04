@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import { LogOut } from "lucide-react";
+import { sair } from "@/app/entrar/acoes";
 import { Aviso, Painel } from "@/components/ui";
 import { carregarSessao } from "@/lib/sessao";
 import { FormMeusDados, FormMinhaSenha } from "./forms";
@@ -23,6 +25,11 @@ export default async function MinhaConta({ searchParams }: { searchParams: Promi
       <Painel titulo="Meus dados">
         <FormMeusDados nome={s.pessoa.nome} telefone={s.pessoa.telefone ?? ""} />
       </Painel>
+      <form action={sair}>
+        <button type="submit" className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl border border-linha bg-superficie text-base font-semibold text-erro hover:border-erro">
+          <LogOut className="size-5" /> Sair do sistema
+        </button>
+      </form>
     </div>
   );
 }

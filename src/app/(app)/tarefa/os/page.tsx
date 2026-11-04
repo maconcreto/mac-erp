@@ -8,6 +8,7 @@ import { ativosDaUsina, normalizarOS } from "@/lib/frota/os-dados";
 import { gestorDaUsina, podeUsarOS } from "@/lib/frota/permissao";
 import { carregarSessao } from "@/lib/sessao";
 import { criarClienteServidor } from "@/lib/supabase/server";
+import { usinaAtual } from "@/lib/usina-atual";
 
 export const metadata = { title: "Ordens de serviço" };
 
@@ -17,22 +18,25 @@ const FILTROS = [
   { k: "todas", l: "Todas" },
 ] as const;
 
-type SP = { usina?: string; filtro?: string; ativo?: string; q?: string };
+type SP = { filtro?: string; ativo?: string; q?: string };
 
 export default async function ListaOS({ searchParams }: { searchParams: Promise<SP> }) {
   const s = await carregarSessao();
   if (!s) redirect("/entrar");
   const sp = await searchParams;
 
-  const usinas = s.usinas.filter((u) => u.ativa && podeUsarOS(s, u.id));
-  if (!usinas.length) {
+  const usina = await usinaAtual(s);
+  if (!usina || !podeUsarOS(s, usina.id)) {
     return (
       <Painel titulo="Ordens de serviço">
-        <Aviso>Você não tem acesso às OS de nenhuma usina. Peça à diretoria para liberar o setor Operação.</Aviso>
+        <Aviso>
+          {usina
+            ? `Você não tem acesso às OS da ${usina.codigo}. Troque a usina no topo da tela ou peça à diretoria para liberar o setor Operação.`
+            : "Você não tem acesso às OS de nenhuma usina. Peça à diretoria para liberar o setor Operação."}
+        </Aviso>
       </Painel>
     );
   }
-  const usina = usinas.find((u) => u.codigo === sp.usina) ?? usinas[0];
   const gestor = gestorDaUsina(s, usina.id);
   const filtro = FILTROS.some((f) => f.k === sp.filtro) ? sp.filtro! : "abertas";
   const q = (sp.q ?? "").trim();
@@ -74,7 +78,7 @@ export default async function ListaOS({ searchParams }: { searchParams: Promise<
 
   const link = (mudar: Partial<SP>) => {
     const p = new URLSearchParams();
-    const v = { usina: usina.codigo, filtro, ativo: sp.ativo, q, ...mudar };
+    const v = { filtro, ativo: sp.ativo, q, ...mudar };
     Object.entries(v).forEach(([k, x]) => x && p.set(k, x));
     return `/tarefa/os?${p}`;
   };
@@ -86,24 +90,11 @@ export default async function ListaOS({ searchParams }: { searchParams: Promise<
           <p className="text-sm font-bold uppercase tracking-wider text-suave">{usina.nome}</p>
           <h1 className="text-3xl font-extrabold">Ordens de serviço</h1>
         </div>
-        <BotaoLink href={`/tarefa/os/nova?usina=${usina.codigo}`} tamanho="lg" className="sm:w-auto">
+        <BotaoLink href="/tarefa/os/nova" tamanho="lg" className="sm:w-auto">
           <Plus className="size-6" /> Abrir OS
         </BotaoLink>
       </div>
 
-      {usinas.length > 1 ? (
-        <nav className="flex flex-wrap gap-2" aria-label="Usina">
-          {usinas.map((u) => (
-            <Link
-              key={u.id}
-              href={`/tarefa/os?usina=${u.codigo}&filtro=${filtro}`}
-              className={`inline-flex min-h-12 items-center rounded-xl border px-4 font-semibold ${u.id === usina.id ? "border-marca-preto bg-marca text-marca-preto" : "border-linha bg-superficie"}`}
-            >
-              {u.codigo}
-            </Link>
-          ))}
-        </nav>
-      ) : null}
 
       <div className="flex flex-col gap-3">
         <nav className="grid grid-cols-3 gap-1 rounded-2xl border border-linha bg-superficie p-1" aria-label="Situação">
@@ -121,7 +112,6 @@ export default async function ListaOS({ searchParams }: { searchParams: Promise<
         </nav>
 
         <form action="/tarefa/os" className="flex flex-wrap gap-2">
-          <input type="hidden" name="usina" value={usina.codigo} />
           <input type="hidden" name="filtro" value={filtro} />
           <select name="ativo" defaultValue={sp.ativo ?? ""} className={`${estiloEntrada} w-auto min-w-32 flex-none`} aria-label="Veículo">
             <option value="">Todos os veículos</option>

@@ -139,12 +139,12 @@ export function FichaOS({ os, usina, ativos, leitura, urls, gestor, travada }: P
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 pb-36">
       {/* ---------- cabeçalho ---------- */}
       <div className="flex items-start gap-3">
-        <Link href={`/tarefa/os?usina=${usina.codigo}`} aria-label="Voltar para as OS" className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-linha bg-superficie">
+        <Link href="/tarefa/os" aria-label="Voltar para as OS" className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-linha bg-superficie">
           <ArrowLeft className="size-6" />
         </Link>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold uppercase tracking-wider text-suave">
-            OS {os.numero}
+            {usina.codigo} · OS {os.numero}
             {os.numero_antigo ? ` · antiga ${os.numero_antigo}` : ""}
           </p>
           <h1 className="text-3xl font-extrabold leading-tight">{nomeAtivo}</h1>

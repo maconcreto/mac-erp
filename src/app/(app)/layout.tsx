@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LogOut, UserRound } from "lucide-react";
+import { LogOut, Settings, UserRound } from "lucide-react";
+import { SeletorUsina } from "@/components/seletor-usina";
 import { Logo } from "@/components/ui";
+import { usinaAtual, usinasAtivas } from "@/lib/usina-atual";
 import { sair } from "@/app/entrar/acoes";
 import { carregarSessao, primeiroNome } from "@/lib/sessao";
 import { supabaseConfigurado } from "@/lib/supabase/config";
@@ -22,23 +24,20 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
   const sessao = await carregarSessao();
   if (!sessao) redirect("/entrar");
 
-  const usinaUnica = sessao.usinas.length === 1 ? sessao.usinas[0] : null;
+  const atual = await usinaAtual(sessao);
+  const ativas = usinasAtivas(sessao).map((u) => ({ codigo: u.codigo, nome: u.nome, cidade: u.cidade }));
 
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-20 border-b-[3px] border-marca bg-marca-preto pt-[env(safe-area-inset-top)] text-[#f2f5ee]">
-        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
-          <Link href="/" aria-label="Início" className="flex min-h-12 items-center">
-            <Logo variante="simbolo" className="w-11 sm:hidden" />
-            <Logo variante="horizontal" className="hidden w-[168px] sm:block" />
+        <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-2.5 sm:gap-3">
+          <Link href="/" aria-label="Início" className="flex min-h-12 shrink-0 items-center">
+            <Logo variante="simbolo" className="w-10 lg:hidden" />
+            <Logo variante="horizontal" className="hidden w-[168px] lg:block" />
           </Link>
-          {usinaUnica ? (
-            <span className="border-l border-white/25 pl-3 text-xs font-semibold uppercase tracking-wider opacity-70">
-              {usinaUnica.codigo}
-            </span>
-          ) : null}
+          {atual ? <SeletorUsina atual={{ codigo: atual.codigo, nome: atual.nome, cidade: atual.cidade }} usinas={ativas} /> : null}
 
-          <nav className="ml-auto flex items-center gap-1 text-sm font-semibold">
+          <nav className="ml-auto flex items-center gap-0.5 text-sm font-semibold sm:gap-1">
             {sessao.gestor ? (
               <>
                 <Link href="/" className="hidden min-h-12 items-center rounded-lg px-3 opacity-80 hover:opacity-100 sm:flex">
@@ -50,8 +49,9 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
               </>
             ) : null}
             {sessao.diretoria ? (
-              <Link href="/cadastros" className="flex min-h-12 items-center rounded-lg px-3 opacity-80 hover:opacity-100">
-                Cadastros
+              <Link href="/cadastros" aria-label="Cadastros" className="flex min-h-12 min-w-12 items-center justify-center gap-2 rounded-lg px-2 opacity-80 hover:opacity-100 sm:px-3">
+                <Settings className="size-5 sm:hidden" />
+                <span className="hidden sm:inline">Cadastros</span>
               </Link>
             ) : null}
             <Link
@@ -62,7 +62,7 @@ export default async function LayoutApp({ children }: { children: React.ReactNod
               <UserRound className="size-5" />
               <span className="hidden md:inline">{primeiroNome(sessao.pessoa.nome)}</span>
             </Link>
-            <form action={sair}>
+            <form action={sair} className="hidden sm:block">
               <button
                 type="submit"
                 aria-label="Sair"

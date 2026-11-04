@@ -98,7 +98,7 @@ export function AssistenteOS({ usina, ativos, ativoInicial }: Props) {
               Ver a OS
             </BotaoLink>
           ) : null}
-          <BotaoLink href={`/tarefa/os?usina=${usina.codigo}`} tamanho="lg" variante="secundario">
+          <BotaoLink href="/tarefa/os" tamanho="lg" variante="secundario">
             Voltar para as OS
           </BotaoLink>
         </div>
@@ -123,7 +123,7 @@ export function AssistenteOS({ usina, ativos, ativoInicial }: Props) {
             <ArrowLeft className="size-6" />
           </button>
         ) : (
-          <Link href={`/tarefa/os?usina=${usina.codigo}`} aria-label="Voltar para as OS" className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-linha bg-superficie">
+          <Link href="/tarefa/os" aria-label="Voltar para as OS" className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-linha bg-superficie">
             <ArrowLeft className="size-6" />
           </Link>
         )}

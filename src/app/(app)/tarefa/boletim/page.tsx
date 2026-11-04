@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Aviso, Painel } from "@/components/ui";
 import { diasPendentes, volumeAcumuladoUsina } from "@/lib/frota/consumo";
@@ -7,26 +6,30 @@ import { gestorDaUsina, podeLancarBoletim } from "@/lib/frota/permissao";
 import { derivar, frotaDe, usinaDe } from "@/lib/frota/regras";
 import { carregarSessao } from "@/lib/sessao";
 import { criarClienteServidor } from "@/lib/supabase/server";
+import { usinaAtual } from "@/lib/usina-atual";
 import { FormBoletim } from "./form";
 
 export const metadata = { title: "Boletim do dia" };
 
 const ehData = (v?: string) => !!v && /^\d{4}-\d{2}-\d{2}$/.test(v);
 
-export default async function PaginaBoletim({ searchParams }: { searchParams: Promise<{ usina?: string; data?: string }> }) {
+export default async function PaginaBoletim({ searchParams }: { searchParams: Promise<{ data?: string }> }) {
   const s = await carregarSessao();
   if (!s) redirect("/entrar");
   const sp = await searchParams;
 
-  const usinas = s.usinas.filter((u) => u.ativa && podeLancarBoletim(s, u.id));
-  if (usinas.length === 0) {
+  const usina = await usinaAtual(s);
+  if (!usina || !podeLancarBoletim(s, usina.id)) {
     return (
       <Painel titulo="Boletim do dia">
-        <Aviso>Você não tem acesso ao boletim de nenhuma usina. Peça à diretoria para liberar o setor Operação.</Aviso>
+        <Aviso>
+          {usina
+            ? `Você não tem acesso ao boletim da ${usina.codigo}. Troque a usina no topo da tela ou peça à diretoria para liberar o setor Operação.`
+            : "Você não tem acesso ao boletim de nenhuma usina. Peça à diretoria para liberar o setor Operação."}
+        </Aviso>
       </Painel>
     );
   }
-  const usina = usinas.find((u) => u.codigo === sp.usina) ?? usinas[0];
   const gestor = gestorDaUsina(s, usina.id);
   const supabase = await criarClienteServidor();
   const hoje = hojeBahia();
@@ -65,19 +68,6 @@ export default async function PaginaBoletim({ searchParams }: { searchParams: Pr
           <p className="text-sm font-bold uppercase tracking-wider text-suave">Boletim diário · {usina.nome}</p>
           <h1 className="text-3xl font-extrabold">Produção e abastecimento</h1>
         </div>
-        {usinas.length > 1 ? (
-          <nav className="flex gap-2">
-            {usinas.map((u) => (
-              <Link
-                key={u.id}
-                href={`/tarefa/boletim?usina=${u.codigo}&data=${data}`}
-                className={`inline-flex min-h-12 items-center rounded-xl border px-4 font-semibold ${u.id === usina.id ? "border-marca-preto bg-marca" : "border-linha bg-superficie"}`}
-              >
-                {u.codigo}
-              </Link>
-            ))}
-          </nav>
-        ) : null}
       </div>
 
       {veiculos.length === 0 ? (
